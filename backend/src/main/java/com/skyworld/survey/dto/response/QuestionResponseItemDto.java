@@ -2,6 +2,7 @@ package com.skyworld.survey.dto.response;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+import com.skyworld.survey.serializer.DynamicResponseSerializer;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
