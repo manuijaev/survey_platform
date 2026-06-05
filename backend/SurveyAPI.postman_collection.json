@@ -1,0 +1,367 @@
+{
+  "info": {
+    "_postman_id": "c1f1f0b4-3f73-4f84-9d5d-6a8d2c9a4a11",
+    "name": "SurveyAPI",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "simple-survey-api"
+  },
+  "item": [
+    {
+      "name": "Surveys",
+      "item": [
+        {
+          "name": "Create Survey",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/xml" },
+              { "key": "Accept", "value": "application/xml" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/surveys", "host": ["{{baseUrl}}"], "path": ["api", "surveys"] },
+            "body": {
+              "mode": "raw",
+              "raw": "<survey><name>Graduate Developer Application Survey</name><description>Initial candidate screening survey</description></survey>"
+            }
+          },
+          "response": [
+            {
+              "name": "Created",
+              "status": "Created",
+              "code": 201,
+              "body": "<survey id=\"1\"><name>Graduate Developer Application Survey</name><description>Initial candidate screening survey</description></survey>"
+            }
+          ]
+        },
+        {
+          "name": "List Surveys",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/xml" }],
+            "url": { "raw": "{{baseUrl}}/api/surveys", "host": ["{{baseUrl}}"], "path": ["api", "surveys"] }
+          },
+          "response": [
+            {
+              "name": "OK",
+              "status": "OK",
+              "code": 200,
+              "body": "<surveys><survey id=\"1\"><name>Graduate Developer Application Survey</name><description>Initial candidate screening survey</description></survey></surveys>"
+            }
+          ]
+        },
+        {
+          "name": "Get Survey",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/xml" }],
+            "url": { "raw": "{{baseUrl}}/api/surveys/{{surveyId}}", "host": ["{{baseUrl}}"], "path": ["api", "surveys", "{{surveyId}}"] }
+          },
+          "response": [
+            {
+              "name": "OK",
+              "status": "OK",
+              "code": 200,
+              "body": "<survey id=\"1\"><name>Graduate Developer Application Survey</name><description>Initial candidate screening survey</description><createdAt>2026-06-05 10:00:00</createdAt><updatedAt>2026-06-05 10:00:00</updatedAt></survey>"
+            }
+          ]
+        },
+        {
+          "name": "Update Survey",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/xml" },
+              { "key": "Accept", "value": "application/xml" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/surveys/{{surveyId}}", "host": ["{{baseUrl}}"], "path": ["api", "surveys", "{{surveyId}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "<survey><name>Graduate Developer Application Survey</name><description>Updated candidate screening survey</description></survey>"
+            }
+          },
+          "response": [
+            {
+              "name": "OK",
+              "status": "OK",
+              "code": 200,
+              "body": "<survey id=\"1\"><name>Graduate Developer Application Survey</name><description>Updated candidate screening survey</description></survey>"
+            }
+          ]
+        },
+        {
+          "name": "Delete Survey",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Accept", "value": "application/xml" }],
+            "url": { "raw": "{{baseUrl}}/api/surveys/{{surveyId}}", "host": ["{{baseUrl}}"], "path": ["api", "surveys", "{{surveyId}}"] }
+          },
+          "response": [
+            {
+              "name": "No Content",
+              "status": "No Content",
+              "code": 204,
+              "body": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Questions",
+      "item": [
+        {
+          "name": "Add Question",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/xml" },
+              { "key": "Accept", "value": "application/xml" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/surveys/{{surveyId}}/questions", "host": ["{{baseUrl}}"], "path": ["api", "surveys", "{{surveyId}}", "questions"] },
+            "body": {
+              "mode": "raw",
+              "raw": "<question><name>full_name</name><type>SHORT_TEXT</type><text>What is your full name?</text><description>[Surname] [First Name] [Other Names]</description><required>true</required><order_index>1</order_index></question>"
+            }
+          },
+          "response": [
+            {
+              "name": "Created",
+              "status": "Created",
+              "code": 201,
+              "body": "<question id=\"1\" name=\"full_name\" type=\"short_text\" required=\"yes\"><text>What is your full name?</text><description>[Surname] [First Name] [Other Names]</description></question>"
+            }
+          ]
+        },
+        {
+          "name": "List Questions",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/xml" }],
+            "url": { "raw": "{{baseUrl}}/api/surveys/{{surveyId}}/questions", "host": ["{{baseUrl}}"], "path": ["api", "surveys", "{{surveyId}}", "questions"] }
+          },
+          "response": [
+            {
+              "name": "OK",
+              "status": "OK",
+              "code": 200,
+              "body": "<questions><question id=\"1\" name=\"full_name\" type=\"short_text\" required=\"yes\"><text>What is your full name?</text><description>[Surname] [First Name] [Other Names]</description></question></questions>"
+            }
+          ]
+        },
+        {
+          "name": "Update Question",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/xml" },
+              { "key": "Accept", "value": "application/xml" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/surveys/{{surveyId}}/questions/{{questionId}}", "host": ["{{baseUrl}}"], "path": ["api", "surveys", "{{surveyId}}", "questions", "{{questionId}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "<question><name>full_name</name><type>SHORT_TEXT</type><text>What is your legal full name?</text><description>[Surname] [First Name] [Other Names]</description><required>true</required><order_index>1</order_index></question>"
+            }
+          },
+          "response": [
+            {
+              "name": "OK",
+              "status": "OK",
+              "code": 200,
+              "body": "<question id=\"1\" name=\"full_name\" type=\"short_text\" required=\"yes\"><text>What is your legal full name?</text><description>[Surname] [First Name] [Other Names]</description></question>"
+            }
+          ]
+        },
+        {
+          "name": "Delete Question",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Accept", "value": "application/xml" }],
+            "url": { "raw": "{{baseUrl}}/api/surveys/{{surveyId}}/questions/{{questionId}}", "host": ["{{baseUrl}}"], "path": ["api", "surveys", "{{surveyId}}", "questions", "{{questionId}}"] }
+          },
+          "response": [
+            {
+              "name": "No Content",
+              "status": "No Content",
+              "code": 204,
+              "body": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Branching Rules",
+      "item": [
+        {
+          "name": "Add Rule",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/xml" },
+              { "key": "Accept", "value": "application/xml" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/surveys/{{surveyId}}/rules", "host": ["{{baseUrl}}"], "path": ["api", "surveys", "{{surveyId}}", "rules"] },
+            "body": {
+              "mode": "raw",
+              "raw": "<skill_tree_rule><source_question_name>years_experience</source_question_name><trigger_value>3+</trigger_value><target_question_name>system_design_question</target_question_name></skill_tree_rule>"
+            }
+          },
+          "response": [
+            {
+              "name": "Created",
+              "status": "Created",
+              "code": 201,
+              "body": "<skill_tree_rule id=\"1\"><sourceQuestionName>years_experience</sourceQuestionName><triggerValue>3+</triggerValue><targetQuestionName>system_design_question</targetQuestionName></skill_tree_rule>"
+            }
+          ]
+        },
+        {
+          "name": "List Rules",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/xml" }],
+            "url": { "raw": "{{baseUrl}}/api/surveys/{{surveyId}}/rules", "host": ["{{baseUrl}}"], "path": ["api", "surveys", "{{surveyId}}", "rules"] }
+          },
+          "response": [
+            {
+              "name": "OK",
+              "status": "OK",
+              "code": 200,
+              "body": "<skill_tree_rules><skill_tree_rule id=\"1\"><sourceQuestionName>years_experience</sourceQuestionName><triggerValue>3+</triggerValue><targetQuestionName>system_design_question</targetQuestionName></skill_tree_rule></skill_tree_rules>"
+            }
+          ]
+        },
+        {
+          "name": "Delete Rule",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Accept", "value": "application/xml" }],
+            "url": { "raw": "{{baseUrl}}/api/surveys/{{surveyId}}/rules/{{ruleId}}", "host": ["{{baseUrl}}"], "path": ["api", "surveys", "{{surveyId}}", "rules", "{{ruleId}}"] }
+          },
+          "response": [
+            {
+              "name": "No Content",
+              "status": "No Content",
+              "code": 204,
+              "body": ""
+            }
+          ]
+        },
+        {
+          "name": "Resolve Next Question",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/xml" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/surveys/{{surveyId}}/next-question?answeredQuestions=full_name,email_address&lastAnswers=years_experience:3+,preferred_frontend_framework:REACT",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "surveys", "{{surveyId}}", "next-question"],
+              "query": [
+                { "key": "answeredQuestions", "value": "full_name,email_address" },
+                { "key": "lastAnswers", "value": "years_experience:3+,preferred_frontend_framework:REACT" }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "OK",
+              "status": "OK",
+              "code": 200,
+              "body": "<next_question><question id=\"7\" name=\"system_design_question\" type=\"long_text\" required=\"yes\"><text>Describe how you would design a distributed caching system.</text><description>Use concrete examples where possible.</description></question><progress><answered>2</answered><total_visible>4</total_visible></progress></next_question>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Responses",
+      "item": [
+        {
+          "name": "Submit Response",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/xml" }],
+            "url": { "raw": "{{baseUrl}}/api/surveys/{{surveyId}}/responses", "host": ["{{baseUrl}}"], "path": ["api", "surveys", "{{surveyId}}", "responses"] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "response",
+                  "type": "text",
+                  "contentType": "application/xml",
+                  "value": "<question_response><answers><answer><question_name>full_name</question_name><answer_value>Jane Doe</answer_value></answer><answer><question_name>email_address</question_name><answer_value>jane@example.com</answer_value></answer><answer><question_name>years_experience</question_name><answer_value>3+</answer_value></answer></answers></question_response>"
+                },
+                {
+                  "key": "certificates",
+                  "type": "file",
+                  "src": "path/to/sample-certificate.pdf"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "Created",
+              "status": "Created",
+              "code": 201,
+              "body": "<question_response><response_id>1</response_id><full_name>Jane Doe</full_name><email_address>jane@example.com</email_address><years_experience>3+</years_experience><certificates/><date_responded>2026-06-05 10:05:00</date_responded></question_response>"
+            }
+          ]
+        },
+        {
+          "name": "List Responses",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/xml" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/surveys/{{surveyId}}/responses?page=1&pageSize=10&email=jane@example.com",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "surveys", "{{surveyId}}", "responses"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "10" },
+                { "key": "email", "value": "jane@example.com" }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "OK",
+              "status": "OK",
+              "code": 200,
+              "body": "<question_responses current_page=\"1\" last_page=\"1\" page_size=\"10\" total_count=\"1\"><question_response><response_id>1</response_id><full_name>Jane Doe</full_name><email_address>jane@example.com</email_address><years_experience>3+</years_experience><certificates><certificate id=\"1\">Degree Certificate.pdf</certificate></certificates><date_responded>2026-06-05 10:05:00</date_responded></question_response></question_responses>"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Certificates",
+      "item": [
+        {
+          "name": "Download Certificate",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "*/*" }],
+            "url": { "raw": "{{baseUrl}}/api/certificates/{{certificateId}}", "host": ["{{baseUrl}}"], "path": ["api", "certificates", "{{certificateId}}"] }
+          },
+          "response": [
+            {
+              "name": "OK",
+              "status": "OK",
+              "code": 200,
+              "body": ""
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "surveyId", "value": "1" },
+    { "key": "questionId", "value": "1" },
+    { "key": "ruleId", "value": "1" },
+    { "key": "responseId", "value": "1" },
+    { "key": "certificateId", "value": "1" }
+  ]
+}
