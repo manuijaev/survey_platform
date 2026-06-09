@@ -10,8 +10,8 @@ import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Data
 @Builder
@@ -36,15 +36,17 @@ public class SurveyResponse {
     @Column(nullable = false, updatable = false)
     private LocalDateTime dateResponded;
 
+    // Use Set instead of List — Hibernate can join-fetch multiple Sets simultaneously
+    // (List/bag causes MultipleBagFetchException when two collections are fetched together)
     @ToString.Exclude
     @Builder.Default
     @OrderBy("id ASC")
     @OneToMany(mappedBy = "surveyResponse", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ResponseAnswer> answers = new ArrayList<>();
+    private Set<ResponseAnswer> answers = new LinkedHashSet<>();
 
     @ToString.Exclude
     @Builder.Default
     @OrderBy("id ASC")
     @OneToMany(mappedBy = "surveyResponse", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Certificate> certificates = new ArrayList<>();
+    private Set<Certificate> certificates = new LinkedHashSet<>();
 }

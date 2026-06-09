@@ -10,19 +10,15 @@ import com.skyworld.survey.entity.SkillTreeRule;
 import com.skyworld.survey.exception.ResourceNotFoundException;
 import com.skyworld.survey.repository.QuestionRepository;
 import com.skyworld.survey.repository.SkillTreeRuleRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -35,17 +31,17 @@ public class SkillTreeService {
     private final QuestionRepository questionRepository;
     private final QuestionService questionService;
 
-    @Lazy
-    @Autowired
-    private SkillTreeService self;
-
     @Cacheable(value = "skill-tree-rules", key = "#surveyId")
+    @Transactional(readOnly = true)
     public List<SkillTreeRule> getRulesForSurvey(Long surveyId) {
         return skillTreeRuleRepository.findBySurveyIdOrderByIdAsc(surveyId);
     }
 
+    @Transactional(readOnly = true)
     public SkillTreeRuleListResponseDto getRulesWrapper(Long surveyId) {
-        List<SkillTreeRuleResponseDto> dtos = getRulesForSurvey(surveyId).stream()
+        List<SkillTreeRuleResponseDto> dtos = skillTreeRuleRepository
+            .findBySurveyIdOrderByIdAsc(surveyId)
+            .stream()
             .map(this::toResponseDto)
             .toList();
         return SkillTreeRuleListResponseDto.builder().skillTreeRules(dtos).build();
@@ -70,19 +66,41 @@ public class SkillTreeService {
 
     @Transactional
     @CacheEvict(value = "skill-tree-rules", key = "#surveyId")
+    public SkillTreeRuleResponseDto updateRule(Long surveyId, Long ruleId, SkillTreeRuleRequest request) {
+        SkillTreeRule rule = skillTreeRuleRepository.findByIdAndSurveyId(ruleId, surveyId)
+            .orElseThrow(() -> new ResourceNotFoundException("Rule not found"));
+        Question source = questionRepository.findBySurveyIdAndName(surveyId, request.getSourceQuestionName())
+            .orElseThrow(() -> new ResourceNotFoundException("Source question not found"));
+        Question target = questionRepository.findBySurveyIdAndName(surveyId, request.getTargetQuestionName())
+            .orElseThrow(() -> new ResourceNotFoundException("Target question not found"));
+
+        rule.setSourceQuestion(source);
+        rule.setTargetQuestion(target);
+        rule.setTriggerValue(request.getTriggerValue());
+        return toResponseDto(skillTreeRuleRepository.save(rule));
+    }
+
+    @Transactional
+    @CacheEvict(value = "skill-tree-rules", key = "#surveyId")
     public void deleteRule(Long surveyId, Long ruleId) {
         SkillTreeRule rule = skillTreeRuleRepository.findByIdAndSurveyId(ruleId, surveyId)
             .orElseThrow(() -> new ResourceNotFoundException("Rule not found"));
         skillTreeRuleRepository.delete(rule);
     }
 
+    @Transactional(readOnly = true)
     public NextQuestionResponseDto resolveNextQuestion(Long surveyId, List<String> answeredNames, Map<String, String> lastAnswers) {
+        // Fetch questions as DTOs (no lazy loading needed)
         List<QuestionResponseDto> questions = questionService.getQuestions(surveyId);
-        List<SkillTreeRule> rules = self.getRulesForSurvey(surveyId);
 
+        // Fetch rules with eager-loaded source/target questions inside this transaction
+        List<SkillTreeRule> rules = skillTreeRuleRepository.findBySurveyIdOrderByIdAsc(surveyId);
+
+        // Build map: targetQuestionName -> list of rules that unlock it
         Map<String, List<SkillTreeRule>> inboundRules = new HashMap<>();
         for (SkillTreeRule rule : rules) {
-            inboundRules.computeIfAbsent(rule.getTargetQuestion().getName(), key -> new ArrayList<>()).add(rule);
+            String targetName = rule.getTargetQuestion().getName();
+            inboundRules.computeIfAbsent(targetName, k -> new ArrayList<>()).add(rule);
         }
 
         Set<String> answeredSet = new HashSet<>(answeredNames == null ? List.of() : answeredNames);
@@ -90,6 +108,7 @@ public class SkillTreeService {
 
         List<QuestionResponseDto> visibleQuestions = new ArrayList<>();
         QuestionResponseDto nextQuestion = null;
+
         for (QuestionResponseDto question : questions) {
             if (isVisible(question.getName(), inboundRules, safeLastAnswers)) {
                 visibleQuestions.add(question);
@@ -100,8 +119,8 @@ public class SkillTreeService {
         }
 
         int answeredVisibleCount = 0;
-        for (QuestionResponseDto question : visibleQuestions) {
-            if (answeredSet.contains(question.getName())) {
+        for (QuestionResponseDto q : visibleQuestions) {
+            if (answeredSet.contains(q.getName())) {
                 answeredVisibleCount++;
             }
         }

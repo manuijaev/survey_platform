@@ -1,10 +1,9 @@
 "use client";
 
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { surveyApi } from "@/lib/api";
+import { surveyApi, type PaginatedResponses } from "@/lib/api";
 import { toastService } from "@/lib/toast-service";
 import { surveyKeys } from "./useSurveys";
-import type { SurveyResponseSummary } from "@/types/survey";
 
 export type ResponseFilters = {
   email?: string;
@@ -20,8 +19,8 @@ export function useResponses(surveyId?: string, filters: ResponseFilters = {}) {
   return useQuery({
     queryKey: responseKeys.list(surveyId ?? "", filters),
     enabled: Boolean(surveyId),
-    queryFn: async () => {
-      if (!surveyId) return [] as SurveyResponseSummary[];
+    queryFn: async (): Promise<PaginatedResponses> => {
+      if (!surveyId) return { items: [], currentPage: 1, lastPage: 1, totalCount: 0 };
       return surveyApi.getResponses(surveyId, filters);
     },
     placeholderData: keepPreviousData
@@ -52,11 +51,8 @@ export function useResponsesActions(surveyId?: string) {
       URL.revokeObjectURL(href);
       return response;
     },
-    onError: (_, payload) => {
-      toastService.error("Download failed", "The certificate file could not be retrieved. Contact an administrator.");
-      if (payload?.filename) {
-        void payload.filename;
-      }
+    onError: () => {
+      toastService.error("Download failed", "The certificate file could not be retrieved.");
     }
   });
 

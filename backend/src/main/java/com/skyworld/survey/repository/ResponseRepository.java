@@ -8,12 +8,16 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
+
 public interface ResponseRepository extends JpaRepository<SurveyResponse, Long> {
 
+    // Fetch both collections as Sets — no MultipleBagFetchException with Sets
     @EntityGraph(attributePaths = {"answers", "certificates"})
     Page<SurveyResponse> findBySurveyIdOrderByDateRespondedDesc(Long surveyId, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"answers", "certificates"})
+    // Email filter: plain query first (no EntityGraph to avoid conflicts with JOIN),
+    // then collections are loaded lazily within the @Transactional(readOnly=true) service method
     @Query(
         value = """
             select distinct sr
@@ -36,4 +40,8 @@ public interface ResponseRepository extends JpaRepository<SurveyResponse, Long> 
     Page<SurveyResponse> findBySurveyIdAndEmailPrefix(@Param("surveyId") Long surveyId,
                                                       @Param("email") String email,
                                                       Pageable pageable);
+
+    // Load answers+certificates for a list of response IDs — used after email-filtered page fetch
+    @EntityGraph(attributePaths = {"answers", "certificates"})
+    List<SurveyResponse> findByIdIn(List<Long> ids);
 }

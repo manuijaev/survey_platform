@@ -1,0 +1,67 @@
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  padding: 10px;
+  min-width: 220px;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 14px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.item span {
+  flex: 1;
+}
+
+.item:hover {
+  background: var(--bg-subtle);
+  color: var(--text-primary);
+}
+
+.itemActive {
+  background: rgba(13, 148, 136, 0.12);
+  color: var(--text-primary);
+}
+
+.subItems {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0 0 4px 28px;
+}
+
+.subItem {
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  padding: 8px 10px;
+  text-align: left;
+  font-size: 13px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.subItem:hover {
+  background: var(--bg-subtle);
+  color: var(--text-primary);
+}
+
+.subItemActive {
+  color: var(--text-primary);
+  background: var(--bg-elevated);
+}

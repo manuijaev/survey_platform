@@ -20,7 +20,9 @@ const questionTypes: Array<{ value: QuestionType; label: string }> = [
   { value: "EMAIL", label: "Email" },
   { value: "SINGLE_CHOICE", label: "Single Choice" },
   { value: "MULTIPLE_CHOICE", label: "Multiple Choice" },
-  { value: "FILE_UPLOAD", label: "File Upload" }
+  { value: "FILE_UPLOAD", label: "File Upload" },
+  { value: "NUMBER", label: "Number" },
+  { value: "SYSTEM_DESIGN", label: "System Design" }
 ];
 
 const defaultValues: QuestionFormValues = {
@@ -31,9 +33,11 @@ const defaultValues: QuestionFormValues = {
   required: false,
   options: [],
   allowMultipleSelections: false,
-  fileFormat: ".pdf",
-  maxFileSizeMb: 1,
-  multipleFiles: false
+  fileFormat: "",
+  maxFileSizeMb: undefined,
+  multipleFiles: false,
+  minNumber: undefined,
+  maxNumber: undefined
 };
 
 export function QuestionEditor({
@@ -74,6 +78,16 @@ export function QuestionEditor({
   const text = watch("text");
   const isChoice = type === "SINGLE_CHOICE" || type === "MULTIPLE_CHOICE";
   const isFile = type === "FILE_UPLOAD";
+  const isNumber = type === "NUMBER";
+  const isSystemDesign = type === "SYSTEM_DESIGN";
+
+  useEffect(() => {
+    if (type !== "FILE_UPLOAD") {
+      setValue("fileFormat", "");
+      setValue("maxFileSizeMb", undefined);
+      setValue("multipleFiles", false);
+    }
+  }, [type, setValue]);
 
   useEffect(() => {
     if (initialQuestion) {
@@ -87,9 +101,14 @@ export function QuestionEditor({
           ? initialQuestion.options.map((option) => ({ value: option.value, label: option.label }))
           : [],
         allowMultipleSelections: initialQuestion.allowMultipleSelections ?? false,
-        fileFormat: initialQuestion.fileFormat ?? ".pdf",
-        maxFileSizeMb: initialQuestion.maxFileSizeMb ?? 1,
-        multipleFiles: initialQuestion.multipleFiles ?? false
+        fileFormat:
+          initialQuestion.type === "FILE_UPLOAD" ? (initialQuestion.fileFormat ?? ".pdf") : "",
+        maxFileSizeMb:
+          initialQuestion.type === "FILE_UPLOAD" ? (initialQuestion.maxFileSizeMb ?? 1) : undefined,
+        multipleFiles:
+          initialQuestion.type === "FILE_UPLOAD" ? (initialQuestion.multipleFiles ?? false) : false,
+        minNumber: initialQuestion.minNumber,
+        maxNumber: initialQuestion.maxNumber
       };
       autoSlugRef.current = nextValues.name;
       reset(nextValues);
@@ -113,7 +132,6 @@ export function QuestionEditor({
 
   const submit = handleSubmit(async (values) => {
     await onSave(values);
-    onClose();
   });
 
   return (
@@ -139,7 +157,14 @@ export function QuestionEditor({
           <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
             Question Basics
           </h3>
-          <Input label="Slug" placeholder="question_slug" {...register("name")} error={errors.name?.message} />
+          <div className="space-y-1.5">
+            <Input label="Slug" placeholder="question_slug" {...register("name")} error={errors.name?.message} />
+            {!errors.name && (
+              <p className="text-xs text-[color:var(--text-muted)]">
+                Auto-filled from question text. Lowercase letters, numbers and underscores only.
+              </p>
+            )}
+          </div>
           <div className="space-y-1.5">
             <label htmlFor="type" className="text-sm font-medium text-[color:var(--text-primary)]">
               Type
@@ -239,6 +264,52 @@ export function QuestionEditor({
             </div>
           </section>
         ) : null}
+
+        {isNumber ? (
+          <section className="space-y-4 rounded-2xl border border-[color:var(--border)] bg-[color:var(--bg-surface)] p-4">
+            <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
+              Number Properties
+            </h3>
+            <div className="grid gap-4 md:grid-cols-2">
+              <Input
+                label="Min value"
+                type="number"
+                {...register("minNumber", { valueAsNumber: true })}
+                error={errors.minNumber?.message}
+              />
+              <Input
+                label="Max value"
+                type="number"
+                {...register("maxNumber", { valueAsNumber: true })}
+                error={errors.maxNumber?.message}
+              />
+            </div>
+          </section>
+        ) : null}
+
+        {isSystemDesign ? (
+          <section className="space-y-4 rounded-2xl border border-[color:var(--border)] bg-[color:var(--bg-surface)] p-4">
+            <div>
+              <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
+                Sub-parts
+              </h3>
+              <p className="mt-1 text-xs text-[color:var(--text-muted)]">
+                Break the question into focused sections. Each sub-part gets its own answer field.
+                Leave empty for a single open-ended answer.
+              </p>
+            </div>
+            <OptionManager
+              fields={fields}
+              register={register}
+              append={append}
+              remove={remove}
+              errors={errors}
+              valuePlaceholder="part_slug"
+              labelPlaceholder="e.g. Describe the architecture"
+            />
+          </section>
+        ) : null}
+
       </form>
     </Modal>
   );

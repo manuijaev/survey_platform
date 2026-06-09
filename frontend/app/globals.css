@@ -95,6 +95,28 @@ select {
   font-family: var(--font-display);
 }
 
+.survey-name {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  line-height: 1.12;
+  text-transform: none;
+  color: var(--text-primary);
+}
+
+.survey-name--sm {
+  font-size: 0.9375rem;
+}
+
+.survey-name--md {
+  font-size: 1.375rem;
+}
+
+.survey-name--lg {
+  font-size: clamp(2.25rem, 4vw, 3.25rem);
+}
+
 .font-body {
   font-family: var(--font-body);
 }

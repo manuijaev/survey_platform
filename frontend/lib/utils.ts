@@ -3,13 +3,15 @@ import { twMerge } from "tailwind-merge";
 
 export const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs));
 
+// Backend requires ^[a-z][a-z0-9_]*$ — underscores only, must start with a letter
 export const slugify = (value: string) =>
   value
     .toLowerCase()
     .trim()
     .replace(/['"]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^[^a-z]+/, "")
+    .replace(/_+$/g, "");
 
 export const truncate = (value: string, max = 80) =>
   value.length <= max ? value : `${value.slice(0, Math.max(0, max - 1))}…`;

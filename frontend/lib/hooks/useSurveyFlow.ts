@@ -14,7 +14,7 @@ export function useNextQuestion() {
     }: {
       surveyId: string;
       answeredQuestions: string[];
-      lastAnswers: Record<string, string>;
+      lastAnswers: Record<string, string | number>;
     }) => surveyApi.getNextQuestion(surveyId, answeredQuestions, lastAnswers)
   });
 }

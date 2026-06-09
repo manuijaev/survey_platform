@@ -56,6 +56,15 @@ public class QuestionRequest {
     @JacksonXmlProperty(localName = "multiple_files")
     private Boolean multipleFiles;
 
+    @JacksonXmlProperty(localName = "min_number")
+    private Integer minNumber;
+
+    @JacksonXmlProperty(localName = "max_number")
+    private Integer maxNumber;
+
+    @JacksonXmlProperty(localName = "branch_only")
+    private Boolean branchOnly;
+
     @Valid
     @Builder.Default
     @JacksonXmlElementWrapper(localName = "options")

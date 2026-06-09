@@ -11,7 +11,9 @@ public enum QuestionType {
     EMAIL("email"),
     SINGLE_CHOICE("choice"),
     MULTIPLE_CHOICE("choice"),
-    FILE_UPLOAD("file");
+    FILE_UPLOAD("file"),
+    NUMBER("number"),
+    SYSTEM_DESIGN("system_design");
 
     private final String wireValue;
 
@@ -30,6 +32,10 @@ public enum QuestionType {
 
     public boolean isMultipleChoice() {
         return this == MULTIPLE_CHOICE;
+    }
+
+    public boolean isSystemDesign() {
+        return this == SYSTEM_DESIGN;
     }
 
     @JsonCreator

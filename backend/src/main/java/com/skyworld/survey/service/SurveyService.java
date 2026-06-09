@@ -7,7 +7,7 @@ import com.skyworld.survey.dto.response.SurveySummaryResponseDto;
 import com.skyworld.survey.entity.Survey;
 import com.skyworld.survey.exception.ResourceNotFoundException;
 import com.skyworld.survey.repository.SurveyRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.cache.annotation.CacheEvict;
@@ -33,8 +33,12 @@ public class SurveyService {
     }
 
     public SurveyListResponseDto getAllSurveys() {
-        List<SurveySummaryResponseDto> surveys = surveyRepository.findAllByOrderByIdAsc().stream()
-            .map(this::mapToSummaryDto)
+        List<SurveySummaryResponseDto> surveys = surveyRepository.findAllWithResponseCountOrderByIdAsc().stream()
+            .map(row -> {
+                Survey survey = (Survey) row[0];
+                Long count = (Long) row[1];
+                return mapToSummaryDto(survey, count);
+            })
             .toList();
         return SurveyListResponseDto.builder().surveys(surveys).build();
     }
@@ -75,11 +79,13 @@ public class SurveyService {
             .build();
     }
 
-    private SurveySummaryResponseDto mapToSummaryDto(Survey survey) {
+    private SurveySummaryResponseDto mapToSummaryDto(Survey survey, Long responseCount) {
         return SurveySummaryResponseDto.builder()
             .id(survey.getId())
             .name(survey.getName())
             .description(survey.getDescription())
+            .responseCount(responseCount != null ? responseCount : 0L)
+            .updatedAt(survey.getUpdatedAt() == null ? null : DATE_TIME_FORMATTER.format(survey.getUpdatedAt()))
             .build();
     }
 }

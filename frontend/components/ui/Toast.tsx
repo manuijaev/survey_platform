@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { AlertCircle, AlertTriangle, CircleCheckBig, Info, X } from "lucide-react";
-import { useEffect, useMemo, useState, type ComponentType } from "react";
+import { useEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import { cn } from "@/lib/utils";
 import type { ToastRecord, ToastType } from "@/lib/toast-service";
 
@@ -56,8 +56,13 @@ export function Toast({
 }) {
   const tone = toneMap[toast.type];
   const Icon = iconMap[toast.type];
-  const [remaining, setRemaining] = useState(toast.duration);
+  const [remaining, setRemaining] = useState(toast.duration ?? 4000);
   const [paused, setPaused] = useState(false);
+  const onDismissRef = useRef(onDismiss);
+
+  useEffect(() => {
+    onDismissRef.current = onDismiss;
+  }, [onDismiss]);
 
   useEffect(() => {
     if (paused) return;
@@ -67,16 +72,21 @@ export function Toast({
         const nextRemaining = Math.max(0, current - 50);
         if (nextRemaining <= 0) {
           window.clearInterval(timer);
-          onDismiss(toast.id);
         }
         return nextRemaining;
       });
     }, 50);
 
     return () => window.clearInterval(timer);
-  }, [onDismiss, paused, toast.id]);
+  }, [paused, toast.id]);
 
-  const progress = useMemo(() => Math.max(0, (remaining / toast.duration) * 100), [remaining, toast.duration]);
+  useEffect(() => {
+    if (remaining <= 0) {
+      onDismissRef.current(toast.id);
+    }
+  }, [remaining, toast.id]);
+
+  const progress = useMemo(() => Math.max(0, (remaining / (toast.duration ?? 4000)) * 100), [remaining, toast.duration]);
 
   return (
     <motion.div

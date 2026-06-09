@@ -56,6 +56,14 @@ public class Question {
 
     private Boolean multipleFiles;
 
+    private Integer minNumber;
+
+    private Integer maxNumber;
+
+    @Column(name = "branch_only", nullable = false)
+    @Builder.Default
+    private Boolean branchOnly = false;
+
     @ToString.Exclude
     @Builder.Default
     @OrderBy("orderIndex ASC, id ASC")

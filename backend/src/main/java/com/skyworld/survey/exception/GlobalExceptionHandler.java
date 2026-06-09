@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -36,6 +37,11 @@ public class GlobalExceptionHandler {
         return error(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponseDto> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        return error(HttpStatus.BAD_REQUEST, "Invalid request parameter: " + ex.getName());
+    }
+
     @ExceptionHandler(MultipartException.class)
     public ResponseEntity<ErrorResponseDto> handleMultipart(MultipartException ex) {
         return error(HttpStatus.BAD_REQUEST, "Invalid multipart request");
@@ -49,7 +55,10 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponseDto> handleGeneric(Exception ex) {
-        return error(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected error");
+        // Log the real cause so it's visible during debugging
+        ex.printStackTrace();
+        String message = ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage();
+        return error(HttpStatus.INTERNAL_SERVER_ERROR, message != null ? message : "Unexpected error");
     }
 
     private ResponseEntity<ErrorResponseDto> error(HttpStatus status, String message) {

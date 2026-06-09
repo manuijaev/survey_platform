@@ -25,4 +25,5 @@ export type SurveyResponseSummary = {
   programmingStack: string[];
   certificates: Array<{ id: string; filename: string }>;
   respondedAt: string;
+  answers?: Record<string, string>;
 };

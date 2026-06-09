@@ -1,5 +1,6 @@
 package com.skyworld.survey.controller;
 
+import com.skyworld.survey.dto.request.QuestionOrderRequest;
 import com.skyworld.survey.dto.request.QuestionRequest;
 import com.skyworld.survey.dto.response.QuestionResponseDto;
 import com.skyworld.survey.dto.response.QuestionsListResponseDto;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -31,8 +33,26 @@ public class QuestionController {
     }
 
     @GetMapping
-    public ResponseEntity<QuestionsListResponseDto> getQuestions(@PathVariable Long surveyId) {
-        return ResponseEntity.ok(questionService.getQuestionsWrapper(surveyId));
+    public ResponseEntity<QuestionsListResponseDto> getQuestions(@PathVariable Long surveyId,
+                                                                   @RequestParam(required = false) String type) {
+        return ResponseEntity.ok(questionService.getQuestionsWrapper(surveyId, type));
+    }
+
+    @PutMapping(value = "/reorder", consumes = MediaType.APPLICATION_XML_VALUE)
+    public ResponseEntity<QuestionsListResponseDto> reorderQuestions(@PathVariable Long surveyId,
+                                                                     @Valid @RequestBody QuestionOrderRequest request) {
+        return ResponseEntity.ok(
+            QuestionsListResponseDto.builder()
+                .questions(questionService.reorderQuestions(surveyId, request.getQuestionIds()))
+                .build()
+        );
+    }
+
+    @PutMapping(value = "/{questionId}", params = "branch_only")
+    public ResponseEntity<QuestionResponseDto> setBranchOnly(@PathVariable Long surveyId,
+                                                             @PathVariable Long questionId,
+                                                             @RequestParam(name = "branch_only") boolean branchOnly) {
+        return ResponseEntity.ok(questionService.setBranchOnly(surveyId, questionId, branchOnly));
     }
 
     @PutMapping(value = "/{questionId}", consumes = MediaType.APPLICATION_XML_VALUE)

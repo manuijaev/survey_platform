@@ -13,8 +13,8 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -45,6 +45,13 @@ public class SkillTreeController {
     public ResponseEntity<Void> deleteRule(@PathVariable Long surveyId, @PathVariable Long ruleId) {
         skillTreeService.deleteRule(surveyId, ruleId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping(value = "/rules/{ruleId}", consumes = MediaType.APPLICATION_XML_VALUE)
+    public ResponseEntity<SkillTreeRuleResponseDto> updateRule(@PathVariable Long surveyId,
+                                                               @PathVariable Long ruleId,
+                                                               @Valid @RequestBody SkillTreeRuleRequest request) {
+        return ResponseEntity.ok(skillTreeService.updateRule(surveyId, ruleId, request));
     }
 
     @GetMapping("/next-question")

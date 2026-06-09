@@ -12,7 +12,7 @@ import com.skyworld.survey.entity.SurveyResponse;
 import com.skyworld.survey.exception.InvalidFileException;
 import com.skyworld.survey.exception.ResourceNotFoundException;
 import com.skyworld.survey.repository.ResponseRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.apache.tika.Tika;
 import org.springframework.data.domain.Page;
@@ -29,7 +29,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
 @Service
 @RequiredArgsConstructor
 public class ResponseService {
@@ -113,6 +112,7 @@ public class ResponseService {
         return toResponseItem(savedResponse, answersMap, List.of());
     }
 
+    @Transactional(readOnly = true)
     public PaginatedResponseWrapper getResponses(Long surveyId, int page, int pageSize, String email) {
         int normalizedPage = Math.max(page, 1);
         int normalizedPageSize = Math.min(Math.max(pageSize, 1), 100);
@@ -120,9 +120,22 @@ public class ResponseService {
 
         Page<SurveyResponse> results;
         if (email == null || email.isBlank()) {
+            // EntityGraph on this method fetches answers + certificates together (Sets, no bag exception)
             results = responseRepository.findBySurveyIdOrderByDateRespondedDesc(surveyId, pageable);
         } else {
-            results = responseRepository.findBySurveyIdAndEmailPrefix(surveyId, email.trim(), pageable);
+            // Plain page query first (no EntityGraph — avoids conflict with the JOIN in the JPQL)
+            Page<SurveyResponse> page0 = responseRepository.findBySurveyIdAndEmailPrefix(surveyId, email.trim(), pageable);
+            // Then eagerly load collections for the page's IDs in one query
+            List<Long> ids = page0.getContent().stream().map(SurveyResponse::getId).toList();
+            Map<Long, SurveyResponse> loaded = ids.isEmpty()
+                ? Map.of()
+                : responseRepository.findByIdIn(ids).stream()
+                    .collect(java.util.stream.Collectors.toMap(SurveyResponse::getId, r -> r));
+            // Return a new page backed by the fully-loaded entities
+            List<SurveyResponse> fullContent = ids.stream()
+                .map(id -> loaded.getOrDefault(id, page0.getContent().stream().filter(r -> r.getId().equals(id)).findFirst().orElseThrow()))
+                .toList();
+            results = new org.springframework.data.domain.PageImpl<>(fullContent, pageable, page0.getTotalElements());
         }
 
         List<QuestionResponseItemDto> items = results.stream()

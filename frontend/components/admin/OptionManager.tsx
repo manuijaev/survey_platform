@@ -13,7 +13,9 @@ export function OptionManager({
   append,
   remove,
   errors,
-  className
+  className,
+  valuePlaceholder = "answer_value",
+  labelPlaceholder = "Answer label"
 }: {
   fields: Array<{ id: string } & Record<string, unknown>>;
   register: UseFormRegister<QuestionFormValues>;
@@ -21,6 +23,8 @@ export function OptionManager({
   remove: UseFieldArrayRemove;
   errors: FieldErrors<QuestionFormValues>;
   className?: string;
+  valuePlaceholder?: string;
+  labelPlaceholder?: string;
 }) {
   return (
     <div className={cn("space-y-4", className)}>
@@ -31,8 +35,8 @@ export function OptionManager({
             className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--bg-surface)] p-4"
           >
             <div className="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
-              <Input label="Value" placeholder="answer_value" {...register(`options.${index}.value`)} />
-              <Input label="Display label" placeholder="Answer label" {...register(`options.${index}.label`)} />
+              <Input label="Value" placeholder={valuePlaceholder} {...register(`options.${index}.value`)} />
+              <Input label="Display label" placeholder={labelPlaceholder} {...register(`options.${index}.label`)} />
               <button
                 type="button"
                 onClick={() => remove(index)}

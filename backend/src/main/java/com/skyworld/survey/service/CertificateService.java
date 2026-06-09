@@ -7,7 +7,7 @@ import com.skyworld.survey.entity.SurveyResponse;
 import com.skyworld.survey.exception.ResourceNotFoundException;
 import com.skyworld.survey.repository.CertificateRepository;
 import com.skyworld.survey.repository.ResponseRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.http.HttpStatus;

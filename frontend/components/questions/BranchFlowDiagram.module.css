@@ -1,0 +1,136 @@
+.wrap {
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(13, 148, 136, 0.05), rgba(15, 23, 42, 0.2));
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.subtitle {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.legendSwatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+
+.legendSurvey {
+  background: rgba(56, 189, 248, 0.25);
+  border-color: rgba(56, 189, 248, 0.45);
+}
+
+.legendTarget {
+  background: rgba(45, 212, 191, 0.25);
+  border-color: rgba(45, 212, 191, 0.55);
+}
+
+.canvas {
+  overflow: auto;
+  padding: 8px;
+}
+
+.svg {
+  display: block;
+  min-width: 100%;
+}
+
+.edge {
+  fill: none;
+  stroke-width: 2;
+}
+
+.edgeSequence {
+  stroke: rgba(148, 163, 184, 0.55);
+}
+
+.edgeBranch {
+  stroke: rgba(45, 212, 191, 0.75);
+}
+
+.edgeLabel {
+  font-size: 11px;
+  fill: var(--text-secondary);
+  paint-order: stroke;
+  stroke: rgba(15, 23, 42, 0.85);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+
+.nodeRect {
+  stroke-width: 1.5;
+}
+
+.nodeStart,
+.nodeEnd {
+  fill: rgba(148, 163, 184, 0.12);
+  stroke: rgba(148, 163, 184, 0.45);
+}
+
+.nodeSurvey {
+  fill: rgba(56, 189, 248, 0.1);
+  stroke: rgba(56, 189, 248, 0.45);
+}
+
+.nodeTarget {
+  fill: rgba(45, 212, 191, 0.12);
+  stroke: rgba(45, 212, 191, 0.55);
+}
+
+.nodeTitle {
+  font-size: 12px;
+  font-weight: 600;
+  fill: var(--text-primary);
+}
+
+.nodeSubtitle {
+  font-size: 10px;
+  fill: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.empty {
+  padding: 28px 20px;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.emptyTitle {
+  margin-bottom: 4px;
+  font-weight: 600;
+  color: var(--text-primary);
+}

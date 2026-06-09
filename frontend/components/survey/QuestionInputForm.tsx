@@ -22,9 +22,13 @@ function buildSchema(question: Question) {
         ? z.object({
             files: z.array(z.instanceof(File))
           })
-        : z.object({
-            answer: choiceSchema
-          });
+        : question.type === "NUMBER"
+          ? z.object({
+              answer: z.coerce.number()
+            })
+          : z.object({
+              answer: choiceSchema
+            });
 
   return base.superRefine((value, ctx) => {
     if (question.type === "FILE_UPLOAD") {
@@ -35,6 +39,35 @@ function buildSchema(question: Question) {
           path: ["files"],
           message: "Please attach at least one PDF file."
         });
+      }
+      return;
+    }
+
+    if (question.type === "NUMBER") {
+      const answer = (value as { answer: number }).answer;
+      if (question.required && (answer === undefined || answer === null)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["answer"],
+          message: "Please fill in this field before continuing."
+        });
+      }
+
+      if (typeof answer === "number") {
+        if (question.minNumber !== undefined && answer < question.minNumber) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["answer"],
+            message: `Value must be at least ${question.minNumber}.`
+          });
+        }
+        if (question.maxNumber !== undefined && answer > question.maxNumber) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["answer"],
+            message: `Value must be at most ${question.maxNumber}.`
+          });
+        }
       }
       return;
     }
@@ -60,7 +93,7 @@ function buildSchema(question: Question) {
 }
 
 export type QuestionStepValue = {
-  answer?: string | string[];
+  answer?: string | string[] | number;
   files?: File[];
 };
 
@@ -82,7 +115,7 @@ export function QuestionInputForm({
   const { register, control, handleSubmit, formState: { errors } } = useForm<QuestionStepValue>({
     resolver: zodResolver(schema),
     defaultValues: {
-      answer: defaultValue?.answer ?? (question.type === "MULTIPLE_CHOICE" ? [] : ""),
+      answer: defaultValue?.answer ?? (question.type === "MULTIPLE_CHOICE" ? [] : question.type === "NUMBER" ? 0 : ""),
       files: defaultValue?.files ?? []
     }
   });
@@ -95,7 +128,7 @@ export function QuestionInputForm({
       }
 
       await onValidSubmit({
-        answer: values.answer ?? "",
+        answer: values.answer ?? (question.type === "NUMBER" ? 0 : ""),
         files: []
       });
     },
@@ -134,6 +167,16 @@ export function QuestionInputForm({
         />
       ) : null}
 
+      {question.type === "NUMBER" ? (
+        <Input
+          type="number"
+          label="Number"
+          placeholder="Enter a number"
+          {...register("answer", { valueAsNumber: true })}
+          error={answerError}
+        />
+      ) : null}
+
       {question.type === "SINGLE_CHOICE" || question.type === "MULTIPLE_CHOICE" ? (
         <Controller
           control={control}
@@ -143,7 +186,7 @@ export function QuestionInputForm({
               name={question.text}
               options={question.options.map((option) => ({ value: option.value, label: option.label }))}
               multiple={question.type === "MULTIPLE_CHOICE" || Boolean(question.allowMultipleSelections)}
-              value={field.value ?? (question.type === "MULTIPLE_CHOICE" ? [] : "")}
+              value={typeof field.value === "string" || Array.isArray(field.value) ? field.value : (question.type === "MULTIPLE_CHOICE" ? [] : "")}
               onChange={field.onChange}
               error={answerError}
             />

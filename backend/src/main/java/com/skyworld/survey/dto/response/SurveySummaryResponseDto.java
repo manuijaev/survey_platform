@@ -20,4 +20,10 @@ public class SurveySummaryResponseDto {
     private String name;
 
     private String description;
+
+    @JacksonXmlProperty(localName = "response_count")
+    private Long responseCount;
+
+    @JacksonXmlProperty(localName = "updated_at")
+    private String updatedAt;
 }

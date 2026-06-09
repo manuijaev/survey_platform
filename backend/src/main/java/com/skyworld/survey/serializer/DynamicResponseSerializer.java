@@ -21,6 +21,8 @@ public class DynamicResponseSerializer extends JsonSerializer<QuestionResponseIt
 
         LinkedHashMap<String, String> answers = value.getAnswers() == null ? new LinkedHashMap<>() : value.getAnswers();
         for (var entry : answers.entrySet()) {
+            // Skip the "certificates" answer key — certificates are written separately as structured XML below
+            if ("certificates".equals(entry.getKey())) continue;
             gen.writeFieldName(entry.getKey());
             gen.writeString(entry.getValue() == null ? "" : entry.getValue());
         }

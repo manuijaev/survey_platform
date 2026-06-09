@@ -18,18 +18,28 @@ import type { Question, QuestionType } from "@/types/question";
 
 type StepRecord = {
   question: Question;
-  answer: string | string[];
+  answer: string | string[] | number;
   files: File[];
   answerText: string;
 };
 
 function normalizeType(type?: string): QuestionType {
-  const value = (type ?? "").toUpperCase();
+  const value = (type ?? "").toUpperCase().trim();
+  // Direct enum name match (returned by our fixed toQuestionType)
+  if (value === "SHORT_TEXT") return "SHORT_TEXT";
+  if (value === "LONG_TEXT") return "LONG_TEXT";
+  if (value === "EMAIL") return "EMAIL";
+  if (value === "SINGLE_CHOICE") return "SINGLE_CHOICE";
+  if (value === "MULTIPLE_CHOICE") return "MULTIPLE_CHOICE";
+  if (value === "FILE_UPLOAD") return "FILE_UPLOAD";
+  if (value === "NUMBER") return "NUMBER";
+  // Fallback fuzzy matching for legacy wire values
   if (value.includes("LONG")) return "LONG_TEXT";
   if (value.includes("EMAIL")) return "EMAIL";
   if (value.includes("MULTI")) return "MULTIPLE_CHOICE";
   if (value.includes("SINGLE")) return "SINGLE_CHOICE";
   if (value.includes("FILE")) return "FILE_UPLOAD";
+  if (value.includes("NUMBER")) return "NUMBER";
   return "SHORT_TEXT";
 }
 
@@ -42,8 +52,10 @@ function normalizeQuestion(question: NonNullable<NextQuestionResponse["question"
     : [];
 
   return {
-    id: question.id || `${surveyId}-${question.text}`.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+    // question.id is now the slug (e.g. "full_name") set by getNextQuestion from @_name attribute
+    id: question.id,
     surveyId,
+    slug: question.id, // slug = id = the question name/slug from the backend
     text: question.text,
     description: question.description,
     type: normalizeType(question.type),
@@ -52,7 +64,9 @@ function normalizeQuestion(question: NonNullable<NextQuestionResponse["question"
     allowMultipleSelections: question.allowMultipleSelections,
     fileFormat: question.fileFormat,
     maxFileSizeMb: question.maxFileSizeMb,
-    multipleFiles: question.multipleFiles
+    multipleFiles: question.multipleFiles,
+    minNumber: question.minNumber,
+    maxNumber: question.maxNumber
   };
 }
 
@@ -79,7 +93,7 @@ function createStepRecord(question: Question, value: QuestionStepValue): StepRec
 
   return {
     question,
-    answer: answer as string | string[],
+    answer: answer as string | string[] | number,
     files: value.files ?? [],
     answerText
   };
@@ -110,7 +124,8 @@ export default function SurveyRespondPage() {
   const [isAdvancing, setIsAdvancing] = useState(false);
   const [stepError, setStepError] = useState("");
   const [initialResolved, setInitialResolved] = useState(false);
-  const initializedRef = useRef(false);
+  const [initError, setInitError] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
   const recordsRef = useRef<StepRecord[]>([]);
 
   useEffect(() => {
@@ -118,8 +133,9 @@ export default function SurveyRespondPage() {
   }, [records]);
 
   useEffect(() => {
-    if (!surveyId || initializedRef.current) return;
-    initializedRef.current = true;
+    if (!surveyId) return;
+    setInitialResolved(false);
+    setInitError(false);
 
     let active = true;
     const run = async () => {
@@ -138,6 +154,9 @@ export default function SurveyRespondPage() {
         }
 
         setCurrentQuestion(normalizeQuestion(result.question, surveyId));
+        setInitError(false);
+      } catch {
+        if (active) setInitError(true);
       } finally {
         if (active) {
           setInitialResolved(true);
@@ -150,7 +169,9 @@ export default function SurveyRespondPage() {
     return () => {
       active = false;
     };
-  }, [nextQuestionMutation, surveyId]);
+  // retryKey lets the user retry after a network error
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [surveyId, retryKey]);
 
   const totalSteps = useMemo(() => {
     const metadataCount = metadataQuery.data?.length ?? 0;
@@ -192,9 +213,18 @@ export default function SurveyRespondPage() {
 
     const nextRecord = createStepRecord(activeQuestion, value);
     const nextRecords = [...recordsRef.current, nextRecord];
-    const nextAnswers = {
-      [activeQuestion.id]: serializeAnswer(activeQuestion, value)
-    };
+    // Backend resolveNextQuestion matches by question name/slug, not numeric id
+    const questionSlug = activeQuestion.slug ?? activeQuestion.id;
+
+    // Accumulate ALL answers so multi-hop branching rules work correctly
+    const allAnswers: Record<string, string | number> = {};
+    for (const record of nextRecords) {
+      const slug = record.question.slug ?? record.question.id;
+      allAnswers[slug] = serializeAnswer(record.question, {
+        answer: record.answer,
+        files: record.files
+      });
+    }
 
     setDrafts((current) => ({
       ...current,
@@ -208,8 +238,8 @@ export default function SurveyRespondPage() {
     try {
       const result = await nextQuestionMutation.mutateAsync({
         surveyId,
-        answeredQuestions: nextRecords.map((record) => record.question.id),
-        lastAnswers: nextAnswers
+        answeredQuestions: nextRecords.map((record) => record.question.slug ?? record.question.id),
+        lastAnswers: allAnswers
       });
 
       setRecords(nextRecords);
@@ -230,7 +260,8 @@ export default function SurveyRespondPage() {
   const submitSurvey = async () => {
     const email = buildSubmissionEmail(records);
     const answers = records.map((record) => ({
-      questionId: record.question.id,
+      // Use slug as questionId — backend maps by question name (slug)
+      questionId: record.question.slug ?? record.question.id,
       value: record.question.type === "FILE_UPLOAD" ? record.files.map((file) => file.name) : record.answer
     }));
 
@@ -341,14 +372,22 @@ export default function SurveyRespondPage() {
     return (
       <div className="mx-auto flex min-h-screen max-w-[680px] items-center px-4 py-10 sm:px-6 lg:px-8">
         <EmptyState
-          title={surveyQuery.data ? "Survey flow unavailable" : "Survey not found"}
+          title={initError ? "Cannot reach server" : surveyQuery.data ? "Survey flow unavailable" : "Survey not found"}
           description={
-            surveyQuery.data
-              ? "The first question could not be loaded from the backend."
-              : "The requested survey could not be found."
+            initError
+              ? "The backend server is not responding. Make sure it is running on port 8080, then retry."
+              : surveyQuery.data
+                ? "The first question could not be loaded from the backend."
+                : "The requested survey could not be found."
           }
-          actionLabel="Retry"
-          onAction={() => window.location.reload()}
+          actionLabel={initError ? "Retry" : "Reload"}
+          onAction={() => {
+            if (initError) {
+              setRetryKey((k) => k + 1);
+            } else {
+              window.location.reload();
+            }
+          }}
         />
       </div>
     );
@@ -368,7 +407,7 @@ export default function SurveyRespondPage() {
           </button>
           <div className="text-right">
             <div className="text-xs uppercase tracking-[0.24em] text-[color:var(--text-muted)]">Survey flow</div>
-            <h1 className="mt-1 font-display text-3xl italic text-[color:var(--text-primary)] sm:text-4xl">
+            <h1 className="survey-name survey-name--md mt-1 sm:text-4xl">
               {surveyTitle}
             </h1>
           </div>

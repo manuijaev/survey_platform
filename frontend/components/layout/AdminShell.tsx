@@ -24,8 +24,11 @@ export function AdminShell({ children }: { children: ReactNode }) {
   };
 
   return (
-    <div className="min-h-screen lg:flex">
-      <aside className="glass-panel sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-l-0 border-t-0 border-b-0 border-r border-[color:var(--glass-border)] bg-[rgba(12,20,16,0.82)] px-4 py-5 lg:flex">
+    <div className="min-h-screen lg:flex" suppressHydrationWarning>
+      <aside
+        className="glass-panel sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-l-0 border-t-0 border-b-0 border-r border-[color:var(--glass-border)] bg-[rgba(12,20,16,0.82)] px-4 py-5 lg:flex"
+        suppressHydrationWarning
+      >
         <Link href="/admin/surveys" className="mb-8 flex items-center gap-3">
           <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[color:var(--border)] bg-[color:var(--bg-elevated)] text-[color:var(--primary)] shadow-[0_0_24px_rgba(13,148,136,0.14)]">
             <ScrollText className="h-5 w-5" />
@@ -75,8 +78,11 @@ export function AdminShell({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      <div className="min-w-0 flex-1">
-        <div className="border-b border-[color:var(--border)] bg-[rgba(6,10,9,0.66)] px-4 py-4 backdrop-blur-xl lg:hidden">
+      <div className="min-w-0 flex-1" suppressHydrationWarning>
+        <div
+          className="border-b border-[color:var(--border)] bg-[rgba(6,10,9,0.66)] px-4 py-4 backdrop-blur-xl lg:hidden"
+          suppressHydrationWarning
+        >
           <div className="flex items-center justify-between">
             <Link href="/admin/surveys" className="flex items-center gap-2">
               <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-[color:var(--border)] bg-[color:var(--bg-elevated)] text-[color:var(--primary)]">

@@ -20,6 +20,8 @@ export type NextQuestionResponse = {
     fileFormat?: string;
     maxFileSizeMb?: number;
     multipleFiles?: boolean;
+    minNumber?: number;
+    maxNumber?: number;
   };
 };
 

@@ -42,4 +42,14 @@ public class QuestionResponseDto {
 
     @JacksonXmlProperty(localName = "file_properties")
     private QuestionFilePropertiesResponseDto fileProperties;
+
+    @JacksonXmlProperty(localName = "min_number")
+    private Integer minNumber;
+
+    @JacksonXmlProperty(localName = "max_number")
+    private Integer maxNumber;
+
+    @JsonSerialize(using = BooleanYesNoSerializer.class)
+    @JacksonXmlProperty(isAttribute = true, localName = "branch_only")
+    private Boolean branchOnly;
 }

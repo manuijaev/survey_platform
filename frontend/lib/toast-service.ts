@@ -42,7 +42,9 @@ export const toastService = {
   subscribe(listener: ToastListener) {
     listeners.add(listener);
     listener([...toasts]);
-    return () => listeners.delete(listener);
+    return () => {
+      listeners.delete(listener);
+    };
   },
   add(input: ToastInput) {
     const record: ToastRecord = {

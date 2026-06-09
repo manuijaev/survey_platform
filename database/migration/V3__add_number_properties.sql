@@ -1,0 +1,2 @@
+ALTER TABLE question ADD COLUMN min_number INTEGER;
+ALTER TABLE question ADD COLUMN max_number INTEGER;

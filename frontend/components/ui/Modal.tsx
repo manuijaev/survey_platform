@@ -55,10 +55,12 @@ export function Modal({
     };
 
     document.addEventListener("keydown", handleKeyDown);
-    const focusTarget = panelRef.current.querySelector<HTMLElement>(
-      "button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])"
-    );
-    focusTarget?.focus();
+    if (panelRef.current) {
+      const focusTarget = panelRef.current.querySelector<HTMLElement>(
+        "button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])"
+      );
+      focusTarget?.focus();
+    }
 
     return () => {
       document.body.style.overflow = previousOverflow;

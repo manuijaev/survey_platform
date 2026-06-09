@@ -1,29 +1,18 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import { SurveyEditor } from "@/components/admin/SurveyEditor";
 import { SurveyCard } from "@/components/survey/SurveyCard";
+import cardStyles from "@/components/survey/SurveyCard.module.css";
+import { SurveyCardMotion } from "@/components/survey/SurveyCardMotion";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Modal } from "@/components/ui/Modal";
-import { Skeleton } from "@/components/ui/Skeleton";
+import { SurveyCardSkeleton } from "@/components/survey/SurveyCardSkeleton";
 import { useSurveyMutations, useSurveys } from "@/lib/hooks";
 import type { Survey } from "@/types/survey";
-
-function SurveySkeleton() {
-  return (
-    <div className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--bg-surface)] p-5">
-      <Skeleton className="h-2 w-full rounded-full" />
-      <Skeleton className="mt-5 h-7 w-4/5 rounded-lg" />
-      <Skeleton className="mt-4 h-4 w-full rounded-lg" />
-      <Skeleton className="mt-3 h-4 w-11/12 rounded-lg" />
-      <Skeleton className="mt-6 h-8 w-32 rounded-full" />
-    </div>
-  );
-}
 
 export default function AdminSurveysPage() {
   const router = useRouter();
@@ -81,20 +70,15 @@ export default function AdminSurveysPage() {
       </div>
 
       {surveysQuery.isLoading ? (
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+        <div className={cardStyles.cardGrid}>
           {Array.from({ length: 6 }).map((_, index) => (
-            <SurveySkeleton key={index} />
+            <SurveyCardSkeleton key={index} />
           ))}
         </div>
       ) : surveys.length > 0 ? (
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+        <div className={cardStyles.cardGrid}>
           {surveys.map((survey, index) => (
-            <motion.div
-              key={survey.id}
-              initial={{ opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, ease: "easeOut", delay: index * 0.06 }}
-            >
+            <SurveyCardMotion key={survey.id} index={index}>
               <SurveyCard
                 survey={survey}
                 mode="admin"
@@ -103,7 +87,7 @@ export default function AdminSurveysPage() {
                 onViewResponses={(item) => router.push(`/admin/surveys/${item.id}/responses`)}
                 onDelete={(item) => setPendingDelete(item)}
               />
-            </motion.div>
+            </SurveyCardMotion>
           ))}
         </div>
       ) : (

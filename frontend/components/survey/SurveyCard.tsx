@@ -5,8 +5,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { cn, formatDateTime, truncate } from "@/lib/utils";
+import { cn, truncate } from "@/lib/utils";
 import type { Survey } from "@/types/survey";
+import styles from "./SurveyCard.module.css";
 
 type SurveyCardProps = {
   survey: Survey;
@@ -17,6 +18,13 @@ type SurveyCardProps = {
   onViewResponses?: (survey: Survey) => void;
   onDelete?: (survey: Survey) => void;
 };
+
+function formatUpdatedLabel(value?: string) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric" }).format(date);
+}
 
 export function SurveyCard({
   survey,
@@ -29,47 +37,35 @@ export function SurveyCard({
 }: SurveyCardProps) {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const updatedLabel = formatUpdatedLabel(survey.lastUpdated);
 
   const goToSurvey = () => router.push(`/surveys/${survey.id}`);
 
   return (
-    <article
-      className={cn(
-        "group relative overflow-hidden rounded-2xl border border-[color:var(--border)] bg-[color:var(--bg-surface)] p-5 transition duration-200 ease-out hover:-translate-y-1 hover:border-[color:var(--border-active)] hover:shadow-[0_0_0_1px_rgba(13,148,136,0.18),0_0_28px_rgba(13,148,136,0.14)]",
-        className
-      )}
-    >
-      {mode === "public" ? (
-        <div className="absolute inset-x-0 top-0 h-2 bg-[linear-gradient(135deg,var(--primary),var(--accent))]" />
-      ) : null}
-
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0 flex-1">
-          <h3 className="font-display text-[22px] text-[color:var(--text-primary)]">{survey.name}</h3>
-          <p className="mt-2 line-clamp-3 text-sm leading-6 text-[color:var(--text-secondary)]">
-            {survey.description ? truncate(survey.description, 180) : "This survey is ready to collect responses."}
-          </p>
-        </div>
+    <article className={cn(styles.card, className)}>
+      <div className={styles.header}>
+        <h3 className={cn("survey-name survey-name--md", styles.title, styles.titleGlass)}>{survey.name}</h3>
 
         {mode === "admin" ? (
-          <div className="relative">
+          <div className={styles.menuWrap}>
             <button
               type="button"
               onClick={() => setMenuOpen((value) => !value)}
-              className="focus-ring rounded-full p-2 text-[color:var(--text-secondary)] transition hover:bg-[color:var(--bg-subtle)] hover:text-[color:var(--text-primary)]"
+              className={cn("focus-ring", styles.menuButton)}
               aria-label="Open survey menu"
+              aria-expanded={menuOpen}
             >
               <MoreVertical className="h-5 w-5" />
             </button>
             {menuOpen ? (
-              <div className="absolute right-0 top-11 z-20 w-52 overflow-hidden rounded-2xl border border-[color:var(--border)] bg-[color:var(--bg-elevated)] p-2 shadow-2xl">
+              <div className={styles.menuPanel}>
                 <button
                   type="button"
                   onClick={() => {
                     setMenuOpen(false);
                     onEdit?.(survey);
                   }}
-                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-[color:var(--text-secondary)] transition hover:bg-[color:var(--bg-subtle)] hover:text-[color:var(--text-primary)]"
+                  className={styles.menuItem}
                 >
                   <Pencil className="h-4 w-4" />
                   Edit
@@ -80,10 +76,10 @@ export function SurveyCard({
                     setMenuOpen(false);
                     onManageQuestions?.(survey);
                   }}
-                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-[color:var(--text-secondary)] transition hover:bg-[color:var(--bg-subtle)] hover:text-[color:var(--text-primary)]"
+                  className={styles.menuItem}
                 >
                   <Settings2 className="h-4 w-4" />
-                  Manage Questions
+                  Questions
                 </button>
                 <button
                   type="button"
@@ -91,10 +87,10 @@ export function SurveyCard({
                     setMenuOpen(false);
                     onViewResponses?.(survey);
                   }}
-                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-[color:var(--text-secondary)] transition hover:bg-[color:var(--bg-subtle)] hover:text-[color:var(--text-primary)]"
+                  className={styles.menuItem}
                 >
                   <Play className="h-4 w-4" />
-                  View Responses
+                  Responses
                 </button>
                 <button
                   type="button"
@@ -102,7 +98,7 @@ export function SurveyCard({
                     setMenuOpen(false);
                     onDelete?.(survey);
                   }}
-                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-[color:var(--error)] transition hover:bg-[rgba(248,113,113,0.08)]"
+                  className={cn(styles.menuItem, styles.menuItemDanger)}
                 >
                   <Trash2 className="h-4 w-4" />
                   Delete
@@ -113,27 +109,40 @@ export function SurveyCard({
         ) : null}
       </div>
 
-      <div className="mt-5 flex flex-wrap items-center gap-2">
-        <Badge tone="teal" className="font-mono">
+      <p className={styles.description}>
+        {survey.description ? truncate(survey.description, 140) : "This survey is ready to collect responses."}
+      </p>
+
+      <div className={styles.meta}>
+        <Badge tone="teal" className="max-w-full truncate font-mono">
           ID {survey.id}
         </Badge>
         <Badge tone="neutral">{survey.responseCount} responses</Badge>
-        {survey.lastUpdated ? (
-          <Badge tone="info" className="font-mono">
-            Updated {formatDateTime(survey.lastUpdated)}
+        {updatedLabel ? (
+          <Badge tone="info" className="max-w-full truncate font-mono">
+            {updatedLabel}
           </Badge>
         ) : null}
       </div>
 
-      <div className="mt-6 flex items-center justify-between gap-3">
-        <div className="text-xs uppercase tracking-[0.24em] text-[color:var(--text-muted)]">
-          {mode === "public" ? "Available survey" : "Admin survey"}
+      <div className={styles.footer}>
+        <span className={styles.footerLabel}>{mode === "public" ? "Public" : "Admin"}</span>
+        <div className={styles.footerActions}>
+          {mode === "public" ? (
+            <Button variant="outline" size="sm" rightIcon={<Play className="h-4 w-4" />} onClick={goToSurvey}>
+              Begin
+            </Button>
+          ) : (
+            <>
+              <Button variant="ghost" size="sm" onClick={() => onManageQuestions?.(survey)}>
+                Questions
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => onViewResponses?.(survey)}>
+                Responses
+              </Button>
+            </>
+          )}
         </div>
-        {mode === "public" ? (
-          <Button variant="outline" rightIcon={<Play className="h-4 w-4" />} onClick={goToSurvey}>
-            Begin Survey
-          </Button>
-        ) : null}
       </div>
     </article>
   );

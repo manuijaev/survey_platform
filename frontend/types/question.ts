@@ -4,7 +4,9 @@ export type QuestionType =
   | "EMAIL"
   | "SINGLE_CHOICE"
   | "MULTIPLE_CHOICE"
-  | "FILE_UPLOAD";
+  | "FILE_UPLOAD"
+  | "NUMBER"
+  | "SYSTEM_DESIGN";
 
 export type QuestionOption = {
   id?: string;
@@ -26,6 +28,9 @@ export type Question = {
   fileFormat?: string;
   maxFileSizeMb?: number;
   multipleFiles?: boolean;
+  minNumber?: number;
+  maxNumber?: number;
+  branchOnly?: boolean;
 };
 
 export type QuestionPayload = {
@@ -39,10 +44,13 @@ export type QuestionPayload = {
   fileFormat?: string;
   maxFileSizeMb?: number;
   multipleFiles?: boolean;
+  minNumber?: number;
+  maxNumber?: number;
+  branchOnly?: boolean;
 };
 
 export type QuestionAnswer = {
   questionId: string;
-  value: string | string[];
+  value: string | string[] | number;
   files?: File[];
 };

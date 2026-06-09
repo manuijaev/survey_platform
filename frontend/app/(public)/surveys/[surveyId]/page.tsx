@@ -52,7 +52,7 @@ export default function SurveyDetailPage() {
       <div className="rounded-[2rem] border border-[color:var(--border)] bg-[rgba(12,20,16,0.9)] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.32)] sm:p-8">
         <div className="space-y-4">
           <div className="text-sm uppercase tracking-[0.24em] text-[color:var(--text-muted)]">Survey landing</div>
-          <h1 className="font-display text-4xl italic text-[color:var(--text-primary)] sm:text-5xl">{survey.name}</h1>
+          <h1 className="survey-name survey-name--lg">{survey.name}</h1>
           <p className="max-w-2xl text-lg leading-8 text-[color:var(--text-secondary)]">
             {survey.description || "This survey is ready to receive thoughtful responses."}
           </p>
