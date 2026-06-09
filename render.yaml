@@ -1,0 +1,28 @@
+# Optional Render Blueprint — import via Dashboard → New → Blueprint
+# Or mirror these settings on your existing Web Service manually.
+
+services:
+  - type: web
+    name: skyworld-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /api/surveys
+    envVars:
+      - key: SERVER_PORT
+        value: "8080"
+      - key: FILE_UPLOAD_PATH
+        value: /var/data/uploads
+      - key: FLYWAY_MIGRATIONS_PATH
+        value: /database/migration
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: "5432"
+      - key: DB_NAME
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
