@@ -32,6 +32,7 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   leftIcon?: ReactNode;
   rightIcon?: ReactNode;
   loading?: boolean;
+  allowWrap?: boolean;
 }
 
 export function Button({
@@ -41,6 +42,7 @@ export function Button({
   leftIcon,
   rightIcon,
   loading,
+  allowWrap = false,
   disabled,
   children,
   type = "button",
@@ -64,7 +66,7 @@ export function Button({
       ) : (
         leftIcon
       )}
-      <span className="whitespace-nowrap">{children}</span>
+      <span className={allowWrap ? "text-center" : "whitespace-nowrap"}>{children}</span>
       {!loading && rightIcon}
     </button>
   );

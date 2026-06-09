@@ -12,7 +12,7 @@ import {
   CalendarDays,
   ChevronRight as Arrow,
   Users,
-  BookmarkCheck,
+  Bookmark,
   Inbox
 } from "lucide-react";
 import { TalentVaultToggle } from "@/components/admin/TalentVaultToggle";
@@ -259,12 +259,12 @@ export default function SurveyResponsesPage() {
     <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
       {/* Breadcrumb + heading */}
       <div className="mb-8 space-y-4">
-        <div className="text-sm uppercase tracking-[0.24em] text-[color:var(--text-muted)]">
+        <div className="truncate text-sm uppercase tracking-[0.24em] text-[color:var(--text-muted)]">
           <Link href="/admin/surveys" className="transition hover:text-[color:var(--text-primary)]">Surveys</Link>
           <span className="mx-2">/</span>
           <Link
             href={`/surveys/${surveyId}`}
-            className="survey-name survey-name--sm transition hover:text-[color:var(--primary)]"
+            className="survey-name survey-name--sm inline-block max-w-[12rem] truncate align-bottom transition hover:text-[color:var(--primary)] sm:max-w-none"
           >
             {surveyName}
           </Link>
@@ -292,7 +292,7 @@ export default function SurveyResponsesPage() {
             </span>
             {view === "all" && vaultCount > 0 ? (
               <span className="flex items-center gap-2 rounded-2xl border border-[rgba(13,148,136,0.28)] bg-[rgba(13,148,136,0.1)] px-4 py-2 text-sm text-[color:var(--accent)]">
-                <BookmarkCheck className="h-4 w-4" />
+                <Bookmark className="h-4 w-4 fill-current" />
                 {vaultCount} in vault
               </span>
             ) : null}
@@ -326,7 +326,7 @@ export default function SurveyResponsesPage() {
                 : "border-[color:var(--border)] bg-[color:var(--bg-surface)] text-[color:var(--text-secondary)] hover:border-[color:var(--border-active)]"
             )}
           >
-            <BookmarkCheck className="h-4 w-4 shrink-0" />
+            <Bookmark className="h-4 w-4 shrink-0 fill-current" />
             Talent vault
             {vaultCount > 0 ? (
               <span className="rounded-full bg-[rgba(13,148,136,0.2)] px-2 py-0.5 font-mono text-[11px]">
@@ -352,7 +352,7 @@ export default function SurveyResponsesPage() {
               <span className="absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin rounded-full border-2 border-[color:var(--primary)] border-t-transparent" />
             ) : null}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <label htmlFor="page-size" className="text-sm text-[color:var(--text-secondary)]">Per page</label>
             <select
               id="page-size"
@@ -409,9 +409,10 @@ export default function SurveyResponsesPage() {
 
       {/* Pagination */}
       {lastPage > 1 ? (
-        <div className="mt-6 flex items-center justify-between gap-3">
+        <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <Button
             variant="ghost"
+            className="w-full sm:w-auto"
             leftIcon={<ChevronLeft className="h-4 w-4" />}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page <= 1}
@@ -437,6 +438,7 @@ export default function SurveyResponsesPage() {
           </div>
           <Button
             variant="ghost"
+            className="w-full sm:w-auto"
             rightIcon={<ChevronRight className="h-4 w-4" />}
             onClick={() => setPage((p) => p + 1)}
             disabled={page >= lastPage}

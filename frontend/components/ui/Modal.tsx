@@ -102,7 +102,7 @@ export function Modal({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="focus-ring rounded-full p-2 text-[color:var(--text-secondary)] transition hover:bg-[color:var(--bg-subtle)] hover:text-[color:var(--text-primary)]"
+                  className="focus-ring flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[color:var(--text-secondary)] transition hover:bg-[color:var(--bg-subtle)] hover:text-[color:var(--text-primary)]"
                   aria-label="Close drawer"
                 >
                   <X className="h-5 w-5" />
@@ -134,7 +134,7 @@ export function Modal({
                   <button
                     type="button"
                     onClick={onClose}
-                    className="focus-ring rounded-full p-2 text-[color:var(--text-secondary)] transition hover:bg-[color:var(--bg-subtle)] hover:text-[color:var(--text-primary)]"
+                    className="focus-ring flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[color:var(--text-secondary)] transition hover:bg-[color:var(--bg-subtle)] hover:text-[color:var(--text-primary)]"
                     aria-label="Close modal"
                   >
                     <X className="h-5 w-5" />

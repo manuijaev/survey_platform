@@ -49,14 +49,14 @@ export default function QuestionManagementPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
       <div className="mb-8 space-y-4">
-        <div className="text-sm uppercase tracking-[0.24em] text-[color:var(--text-muted)]">
+        <div className="truncate text-sm uppercase tracking-[0.24em] text-[color:var(--text-muted)]">
           <Link href="/admin/surveys" className="transition hover:text-[color:var(--text-primary)]">
             Surveys
           </Link>
           <span className="mx-2 text-[color:var(--text-muted)]">/</span>
           <Link
             href={`/surveys/${surveyId}`}
-            className="survey-name survey-name--sm transition hover:text-[color:var(--primary)]"
+            className="survey-name survey-name--sm inline-block max-w-[12rem] truncate align-bottom transition hover:text-[color:var(--primary)] sm:max-w-none"
           >
             {surveyQuery.data?.name ?? surveyId}
           </Link>
@@ -78,7 +78,7 @@ export default function QuestionManagementPage() {
             </label>
             <select
               id="survey-selector"
-              className="focus-ring h-11 min-w-[220px] rounded-xl border border-[color:var(--border)] bg-[color:var(--bg-surface)] px-4 text-sm text-[color:var(--text-primary)]"
+              className="focus-ring h-11 w-full min-w-0 rounded-xl border border-[color:var(--border)] bg-[color:var(--bg-surface)] px-4 text-sm text-[color:var(--text-primary)] sm:min-w-[220px] sm:w-auto"
               value={surveyId}
               onChange={(event) => {
                 const tab = activeSection === "branching" ? "branching" : questionTab;
@@ -95,7 +95,7 @@ export default function QuestionManagementPage() {
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
+      <div className="grid gap-4 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-6">
         <QuestionManagementSidebar
           activeSection={activeSection}
           questionTab={questionTab}

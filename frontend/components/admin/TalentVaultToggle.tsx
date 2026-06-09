@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { Bookmark, BookmarkCheck, Loader2 } from "lucide-react";
+import { Bookmark, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type TalentVaultToggleProps = {
@@ -48,7 +48,7 @@ export function TalentVaultToggle({
       {loading ? (
         <Loader2 className={cn(iconSize, "animate-spin")} />
       ) : shortlisted ? (
-        <BookmarkCheck className={iconSize} />
+        <Bookmark className={cn(iconSize, "fill-current")} />
       ) : (
         <Bookmark className={iconSize} />
       )}

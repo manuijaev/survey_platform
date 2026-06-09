@@ -396,18 +396,18 @@ export default function SurveyRespondPage() {
   return (
     <div className="min-h-screen px-4 py-4 sm:px-6 lg:px-8">
       <div className="mx-auto w-full max-w-[680px]">
-        <div className="mb-5 flex items-start justify-between gap-4">
+        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
           <button
             type="button"
             onClick={() => router.push(`/surveys/${surveyId}`)}
-            className="focus-ring inline-flex items-center gap-2 text-sm text-[color:var(--text-secondary)] transition hover:text-[color:var(--text-primary)]"
+            className="focus-ring inline-flex min-h-11 items-center gap-2 self-start text-sm text-[color:var(--text-secondary)] transition hover:text-[color:var(--text-primary)]"
           >
             <ChevronLeft className="h-4 w-4" />
             Back
           </button>
-          <div className="text-right">
+          <div className="min-w-0 sm:text-right">
             <div className="text-xs uppercase tracking-[0.24em] text-[color:var(--text-muted)]">Survey flow</div>
-            <h1 className="survey-name survey-name--md mt-1 sm:text-4xl">
+            <h1 className="survey-name survey-name--md mt-1 truncate sm:text-4xl">
               {surveyTitle}
             </h1>
           </div>

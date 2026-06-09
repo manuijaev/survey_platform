@@ -356,8 +356,8 @@ export function ResponseDetailModal({
               {...motionPanel}
             >
             {/* Header */}
-            <div className="flex items-start justify-between gap-4 border-b border-[color:var(--border)] px-6 py-5">
-              <div className="min-w-0">
+            <div className="flex flex-col gap-4 border-b border-[color:var(--border)] px-4 py-4 sm:flex-row sm:items-start sm:justify-between sm:px-6 sm:py-5">
+              <div className="min-w-0 flex-1">
                 <motion.div
                   className="flex flex-wrap items-center gap-2"
                   custom={0}
@@ -392,7 +392,7 @@ export function ResponseDetailModal({
                   </span>
                 </motion.div>
               </div>
-              <div className="flex shrink-0 items-center gap-2">
+              <div className="flex w-full shrink-0 items-center justify-between gap-2 sm:w-auto sm:justify-end">
                 {onToggleVault ? (
                   <motion.div
                     custom={2}
@@ -414,7 +414,7 @@ export function ResponseDetailModal({
                 <motion.button
                   type="button"
                   onClick={onClose}
-                  className="focus-ring shrink-0 rounded-full p-2 text-[color:var(--text-secondary)] transition hover:bg-[color:var(--bg-subtle)] hover:text-[color:var(--text-primary)]"
+                  className="focus-ring flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[color:var(--text-secondary)] transition hover:bg-[color:var(--bg-subtle)] hover:text-[color:var(--text-primary)]"
                   aria-label="Close"
                   custom={3}
                   variants={reduceMotion ? undefined : headerItem}
@@ -526,17 +526,18 @@ export function ResponseDetailModal({
 
             {/* Footer */}
             <motion.div
-              className="flex items-center justify-between gap-3 border-t border-[color:var(--border)] px-6 py-4"
+              className="flex flex-col gap-3 border-t border-[color:var(--border)] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6"
               variants={reduceMotion ? undefined : footerVariants}
               initial={reduceMotion ? false : "hidden"}
               animate={reduceMotion ? undefined : "visible"}
               exit={reduceMotion ? undefined : "exit"}
             >
-              <Button variant="ghost" onClick={onClose}>
+              <Button variant="ghost" className="w-full sm:w-auto" onClick={onClose}>
                 Close
               </Button>
               <Button
                 variant="outline"
+                className="w-full sm:w-auto"
                 leftIcon={<Printer className="h-4 w-4" />}
                 onClick={() => savePdf(response, surveyName)}
               >

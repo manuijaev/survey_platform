@@ -1,7 +1,12 @@
 import { AxiosError } from "axios";
 import { surveyApi } from "@/lib/api";
 import type { Question } from "@/types/question";
-import type { BranchingRule, BranchingRuleFormFields, BranchingRuleQuestion } from "@/types/rule";
+import type {
+  BranchingRule,
+  BranchingRuleFormFields,
+  BranchingRuleQuestion,
+  BranchingRuleQuestionOption
+} from "@/types/rule";
 
 function toBranchingQuestion(question: Question): BranchingRuleQuestion {
   return {

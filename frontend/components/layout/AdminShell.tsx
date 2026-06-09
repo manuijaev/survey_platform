@@ -110,15 +110,20 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
       <div className="min-w-0 flex-1" suppressHydrationWarning>
         <div
-          className="border-b border-[color:var(--border)] bg-[rgba(6,10,9,0.66)] px-4 py-4 backdrop-blur-xl lg:hidden"
+          className="border-b border-[color:var(--border)] bg-[rgba(6,10,9,0.66)] px-4 py-3 backdrop-blur-xl lg:hidden"
           suppressHydrationWarning
         >
-          <div className="flex items-center justify-between">
-            <Link href="/admin/surveys" className="flex items-center gap-2">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-[color:var(--border)] bg-[color:var(--bg-elevated)] text-[color:var(--primary)]">
+          <div className="flex items-center justify-between gap-3">
+            <Link href="/admin/surveys" className="flex min-w-0 items-center gap-2">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[color:var(--border)] bg-[color:var(--bg-elevated)] text-[color:var(--primary)]">
                 <FileText className="h-4 w-4" />
               </span>
-              <div className="font-display text-lg text-[color:var(--text-primary)]">Control</div>
+              <div className="min-w-0">
+                <div className="truncate font-display text-lg text-[color:var(--text-primary)]">Control</div>
+                {surveyId ? (
+                  <div className="truncate font-mono text-[11px] text-[color:var(--text-muted)]">{surveyId}</div>
+                ) : null}
+              </div>
             </Link>
             <Button
               variant="ghost"
@@ -127,11 +132,45 @@ export function AdminShell({ children }: { children: ReactNode }) {
               loading={loggingOut}
               onClick={handleLogout}
             >
-              Log out
+              <span className="sr-only sm:not-sr-only">Log out</span>
             </Button>
           </div>
         </div>
-        <main className="min-h-screen">{children}</main>
+
+        {surveyId ? (
+          <nav
+            className="sticky top-0 z-30 border-b border-[color:var(--border)] bg-[rgba(6,10,9,0.88)] px-2 py-2 backdrop-blur-xl lg:hidden"
+            aria-label="Survey admin navigation"
+          >
+            <div className="flex gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {primaryNav.map((item) => {
+                const Icon = item.icon;
+                const href = buildHref(item.href);
+                const active = pathname.startsWith(href);
+                const disabled = item.href !== "/admin/surveys" && !surveyId;
+                return (
+                  <Link
+                    key={item.label}
+                    href={href}
+                    aria-disabled={disabled}
+                    className={cn(
+                      "focus-ring inline-flex min-h-11 shrink-0 items-center gap-2 rounded-2xl border px-4 py-2.5 text-sm font-medium transition",
+                      active
+                        ? "border-[color:var(--border-active)] bg-[rgba(13,148,136,0.14)] text-[color:var(--text-primary)]"
+                        : "border-[color:var(--border)] bg-[color:var(--bg-surface)] text-[color:var(--text-secondary)]",
+                      disabled && "pointer-events-none opacity-50"
+                    )}
+                  >
+                    <Icon className="h-4 w-4 shrink-0" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          </nav>
+        ) : null}
+
+        <main className="min-h-screen pb-4 lg:pb-0">{children}</main>
       </div>
     </div>
   );

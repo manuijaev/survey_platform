@@ -57,7 +57,7 @@ export default function AdminSurveysPage() {
       <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <div className="text-sm uppercase tracking-[0.24em] text-[color:var(--text-muted)]">Surveys / Management</div>
-          <h1 className="mt-3 font-display text-4xl text-[color:var(--text-primary)] sm:text-5xl">
+          <h1 className="mt-3 font-display text-3xl text-[color:var(--text-primary)] sm:text-4xl lg:text-5xl">
             Survey Management
           </h1>
           <p className="mt-4 max-w-2xl text-sm leading-6 text-[color:var(--text-secondary)]">

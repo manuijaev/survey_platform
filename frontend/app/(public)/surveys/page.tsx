@@ -23,7 +23,7 @@ export default function PublicSurveysPage() {
       <section className="relative mx-auto max-w-7xl px-4 pb-12 pt-20 sm:px-6 lg:px-8 lg:pt-28">
         <div className="max-w-3xl">
           <div className="text-sm uppercase tracking-[0.3em] text-[color:var(--text-muted)]">Survey collection</div>
-          <h1 className="mt-4 font-display text-5xl italic text-[color:var(--text-primary)] sm:text-6xl">
+          <h1 className="mt-4 font-display text-4xl italic text-[color:var(--text-primary)] sm:text-5xl lg:text-6xl">
             Find Your Survey
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-8 text-[color:var(--text-secondary)]">

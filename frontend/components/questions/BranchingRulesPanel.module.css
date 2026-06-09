@@ -292,8 +292,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   border: none;
   border-radius: 999px;
   background: transparent;
@@ -315,4 +315,92 @@
   display: flex;
   align-items: center;
   gap: 4px;
+}
+
+@media (max-width: 767px) {
+  .tableWrap {
+    border: none;
+    background: transparent;
+    overflow: visible;
+  }
+
+  .table {
+    display: block;
+  }
+
+  .table thead {
+    display: none;
+  }
+
+  .table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .table tr {
+    display: block;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    background: var(--bg-surface);
+    padding: 14px;
+  }
+
+  .table tr.editRow {
+    background: rgba(56, 189, 248, 0.08);
+  }
+
+  .table td {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: none;
+  }
+
+  .table td::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding-top: 2px;
+  }
+
+  .table td.colActions {
+    justify-content: flex-end;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    margin-top: 4px;
+  }
+
+  .table td.colActions::before {
+    display: none;
+  }
+
+  .table .emptyRow td {
+    display: block;
+    padding: 24px 12px;
+  }
+
+  .table .emptyRow td::before {
+    display: none;
+  }
+
+  .deleteBanner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .deleteActions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .headerTitle {
+    flex-wrap: wrap;
+  }
 }

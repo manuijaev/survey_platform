@@ -60,11 +60,11 @@ export function QuestionStep({
         ) : null}
       </div>
 
-      <div className={cn("space-y-5 pb-24 md:pb-0", error && "animate-shake")}>{children}</div>
+      <div className={cn("space-y-5 pb-28 md:pb-0", error && "animate-shake")}>{children}</div>
 
       {error ? <p className="text-sm text-[color:var(--error)]">{error}</p> : null}
 
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-[color:var(--border)] bg-[rgba(6,10,9,0.92)] px-4 py-4 backdrop-blur-xl safe-bottom md:static md:border-0 md:bg-transparent md:px-0 md:py-0">
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[color:var(--border)] bg-[rgba(6,10,9,0.92)] px-4 py-4 backdrop-blur-xl safe-bottom md:static md:z-auto md:border-0 md:bg-transparent md:px-0 md:py-0">
         <div className="mx-auto flex max-w-[680px] items-center justify-between gap-3">
           <div>
             {canGoBack ? (

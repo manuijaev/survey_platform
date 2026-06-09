@@ -370,7 +370,7 @@ export function RuleEditor({
           ) : null}
         </AnimatePresence>
 
-        <div className="mt-4 flex items-center justify-between gap-3">
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <button
             type="button"
             onClick={() => reset()}
@@ -396,11 +396,17 @@ export function RuleEditor({
 
       {/* Save */}
       {rules.length > 0 ? (
-        <div className="mt-5 flex items-center justify-between gap-3">
+        <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-[color:var(--text-muted)]">
             Rules are saved to the backend and take effect immediately for new survey sessions.
           </p>
-          <Button variant="outline" leftIcon={<GitMerge className="h-4 w-4" />} onClick={onSave} loading={saving}>
+          <Button
+            variant="outline"
+            className="w-full sm:w-auto"
+            leftIcon={<GitMerge className="h-4 w-4" />}
+            onClick={onSave}
+            loading={saving}
+          >
             Save all rules
           </Button>
         </div>

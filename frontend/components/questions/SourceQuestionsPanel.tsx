@@ -93,10 +93,10 @@ function SortableQuestionCard({
         active && "ring-1 ring-[color:var(--primary)]"
       )}
     >
-      <div className="flex items-start gap-3 p-4 sm:p-5">
+      <div className="flex flex-wrap items-start gap-3 p-4 sm:p-5">
         <button
           type="button"
-          className="focus-ring mt-0.5 cursor-grab rounded-xl border border-[color:var(--border)] bg-[color:var(--bg-elevated)] p-2 text-[color:var(--text-muted)] active:cursor-grabbing"
+          className="focus-ring flex h-11 w-11 shrink-0 cursor-grab items-center justify-center self-start rounded-xl border border-[color:var(--border)] bg-[color:var(--bg-elevated)] text-[color:var(--text-muted)] active:cursor-grabbing sm:mt-0.5"
           aria-label="Drag question"
           {...attributes}
           {...listeners}
@@ -126,11 +126,11 @@ function SortableQuestionCard({
           </div>
         </button>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center justify-end gap-1 self-end sm:self-auto">
           <button
             type="button"
             onClick={onEdit}
-            className="focus-ring rounded-full p-2 text-[color:var(--text-secondary)] transition hover:bg-[color:var(--bg-subtle)] hover:text-[color:var(--text-primary)]"
+            className="focus-ring flex h-11 w-11 items-center justify-center rounded-full text-[color:var(--text-secondary)] transition hover:bg-[color:var(--bg-subtle)] hover:text-[color:var(--text-primary)]"
             aria-label={`Edit ${question.text}`}
           >
             <Edit3 className="h-4 w-4" />
@@ -138,7 +138,7 @@ function SortableQuestionCard({
           <button
             type="button"
             onClick={onDelete}
-            className="focus-ring rounded-full p-2 text-[color:var(--text-secondary)] transition hover:bg-[rgba(248,113,113,0.08)] hover:text-[color:var(--error)]"
+            className="focus-ring flex h-11 w-11 items-center justify-center rounded-full text-[color:var(--text-secondary)] transition hover:bg-[rgba(248,113,113,0.08)] hover:text-[color:var(--error)]"
             aria-label={`Delete ${question.text}`}
           >
             <Trash2 className="h-4 w-4" />
@@ -146,7 +146,7 @@ function SortableQuestionCard({
           <button
             type="button"
             onClick={onToggle}
-            className="focus-ring rounded-full p-2 text-[color:var(--text-secondary)] transition hover:bg-[color:var(--bg-subtle)] hover:text-[color:var(--text-primary)]"
+            className="focus-ring flex h-11 w-11 items-center justify-center rounded-full text-[color:var(--text-secondary)] transition hover:bg-[color:var(--bg-subtle)] hover:text-[color:var(--text-primary)]"
             aria-label={expanded ? "Collapse question" : "Expand question"}
           >
             {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}

@@ -1,0 +1,10 @@
+export const PWA_NAME = "SkyWorld Survey Platform";
+export const PWA_SHORT_NAME = "SkyWorld";
+export const PWA_DESCRIPTION = "Browse surveys, respond on the go, and manage talent from your home screen.";
+export const PWA_THEME_COLOR = "#060a09";
+export const PWA_BACKGROUND_COLOR = "#060a09";
+export const PWA_START_URL = "/surveys";
+export const SW_URL = "/sw.js";
+export const SW_SCOPE = "/";
+export const INSTALL_DISMISS_KEY = "skyworld-pwa-install-dismissed";
+export const INSTALL_DISMISS_DAYS = 14;

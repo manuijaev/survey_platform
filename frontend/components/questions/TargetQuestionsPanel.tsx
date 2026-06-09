@@ -248,19 +248,19 @@ export function TargetQuestionsPanel({ surveyId }: TargetQuestionsPanelProps) {
             ) : (
               targetQuestions.map((question) => (
                 <tr key={question.id}>
-                  <td className={styles.colSource}>
+                  <td className={styles.colSource} data-label="Name">
                     <code className={styles.codeChip}>{question.slug ?? question.id}</code>
                   </td>
-                  <td>
+                  <td data-label="Question">
                     <p className="text-sm text-[color:var(--text-primary)]">{question.text}</p>
                     {question.description ? (
                       <p className="mt-1 text-xs text-[color:var(--text-muted)]">{question.description}</p>
                     ) : null}
                   </td>
-                  <td className={styles.colTrigger}>
+                  <td className={styles.colTrigger} data-label="Type">
                     <Badge tone="neutral">{typeLabel(question.type)}</Badge>
                   </td>
-                  <td className={styles.colActions}>
+                  <td className={styles.colActions} data-label="Actions">
                     <div className={styles.rowActions}>
                       <button
                         type="button"

@@ -73,16 +73,16 @@ export function RuleRow({
 
   return (
     <tr>
-      <td className={styles.colSource}>
+      <td className={styles.colSource} data-label="Source">
         <code className={styles.codeChip}>{rule.sourceQuestionName}</code>
       </td>
-      <td className={styles.colTrigger}>
+      <td className={styles.colTrigger} data-label="If answer is">
         <span className={styles.triggerPill}>{rule.triggerValue}</span>
       </td>
-      <td className={styles.colTarget}>
+      <td className={styles.colTarget} data-label="Target">
         <code className={styles.codeChip}>{rule.targetQuestionName}</code>
       </td>
-      <td className={styles.colActions}>
+      <td className={styles.colActions} data-label="Actions">
         <div className={styles.rowActions}>
           <button
             type="button"
