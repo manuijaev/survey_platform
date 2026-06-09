@@ -9,6 +9,7 @@ export type ResponseFilters = {
   email?: string;
   page?: number;
   size?: number;
+  shortlisted?: boolean;
 };
 
 export const responseKeys = {

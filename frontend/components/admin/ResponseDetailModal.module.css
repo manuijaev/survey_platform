@@ -1,0 +1,35 @@
+.overlay {
+  perspective: 1200px;
+}
+
+.panelShell {
+  transform-style: preserve-3d;
+}
+
+.glow {
+  position: absolute;
+  inset: -40%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 50% 40%,
+    rgba(13, 148, 136, 0.28) 0%,
+    rgba(13, 148, 136, 0.08) 38%,
+    transparent 72%
+  );
+  pointer-events: none;
+  filter: blur(24px);
+}
+
+.panel {
+  box-shadow:
+    0 0 0 1px rgba(13, 148, 136, 0.14),
+    0 28px 80px rgba(0, 0, 0, 0.55),
+    0 0 60px rgba(13, 148, 136, 0.12);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glow {
+    display: none;
+  }
+}

@@ -1,15 +1,94 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Download, ExternalLink, FileText, X, Printer, CalendarDays, Mail } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { TalentVaultToggle } from "@/components/admin/TalentVaultToggle";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { getAnswerAction } from "@/lib/responseAnswerActions";
 import { cn, formatDateTime } from "@/lib/utils";
 import type { QuestionType } from "@/types/question";
 import type { SurveyResponseSummary } from "@/types/survey";
+import styles from "./ResponseDetailModal.module.css";
+
+const popSpring = { type: "spring" as const, stiffness: 420, damping: 28, mass: 0.82 };
+const softSpring = { type: "spring" as const, stiffness: 320, damping: 30, mass: 0.9 };
+const snapSpring = { type: "spring" as const, stiffness: 520, damping: 34, mass: 0.75 };
+
+const backdropVariants = {
+  hidden: { opacity: 0, backdropFilter: "blur(0px)" },
+  visible: {
+    opacity: 1,
+    backdropFilter: "blur(12px)",
+    transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] }
+  },
+  exit: { opacity: 0, backdropFilter: "blur(0px)", transition: { duration: 0.22 } }
+};
+
+const panelVariants = {
+  hidden: {
+    opacity: 0,
+    y: 72,
+    scale: 0.86,
+    rotateX: 8,
+    filter: "blur(6px)"
+  },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    rotateX: 0,
+    filter: "blur(0px)",
+    transition: {
+      ...popSpring,
+      opacity: { duration: 0.28 },
+      filter: { duration: 0.35 }
+    }
+  },
+  exit: {
+    opacity: 0,
+    y: 48,
+    scale: 0.94,
+    rotateX: 4,
+    filter: "blur(4px)",
+    transition: { duration: 0.22, ease: [0.4, 0, 1, 1] }
+  }
+};
+
+const glowVariants = {
+  hidden: { opacity: 0, scale: 0.6 },
+  visible: { opacity: 1, scale: 1, transition: { delay: 0.08, ...softSpring } },
+  exit: { opacity: 0, scale: 0.85, transition: { duration: 0.2 } }
+};
+
+const headerItem = {
+  hidden: { opacity: 0, y: 18, scale: 0.96 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { delay: 0.12 + i * 0.07, ...snapSpring }
+  })
+};
+
+const answerCard = {
+  hidden: { opacity: 0, y: 22, scale: 0.94, rotate: -0.6 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    rotate: 0,
+    transition: { delay: 0.2 + i * 0.055, ...softSpring }
+  })
+};
+
+const footerVariants = {
+  hidden: { opacity: 0, y: 16 },
+  visible: { opacity: 1, y: 0, transition: { delay: 0.28, ...softSpring } },
+  exit: { opacity: 0, y: 10, transition: { duration: 0.15 } }
+};
 
 // Label map: converts snake_case question slugs to readable labels
 function toLabel(key: string): string {
@@ -18,8 +97,54 @@ function toLabel(key: string): string {
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+function AnswerActionButton({
+  fieldKey,
+  value,
+  questionType
+}: {
+  fieldKey: string;
+  value: string;
+  questionType?: QuestionType;
+}) {
+  const action = getAnswerAction(fieldKey, value, questionType);
+  if (!action) return null;
+
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      className="mt-3"
+      title={action.value}
+      leftIcon={
+        action.kind === "email" ? (
+          <Mail className="h-3.5 w-3.5" />
+        ) : (
+          <ExternalLink className="h-3.5 w-3.5" />
+        )
+      }
+      onClick={() => {
+        if (action.kind === "email") {
+          window.location.href = action.href;
+          return;
+        }
+        window.open(action.href, "_blank", "noopener,noreferrer");
+      }}
+    >
+      {action.label}
+    </Button>
+  );
+}
+
 // Format pipe-separated multi-choice answers as tags
-function AnswerValue({ value }: { value: string }) {
+function AnswerValue({
+  fieldKey,
+  value,
+  questionType
+}: {
+  fieldKey: string;
+  value: string;
+  questionType?: QuestionType;
+}) {
   if (!value || value === "") {
     return <span className="text-[color:var(--text-muted)]">—</span>;
   }
@@ -43,13 +168,21 @@ function AnswerValue({ value }: { value: string }) {
   // Long text answers
   if (value.length > 80) {
     return (
-      <p className="mt-1 text-sm leading-6 text-[color:var(--text-primary)] whitespace-pre-wrap">
-        {value}
-      </p>
+      <>
+        <p className="mt-1 text-sm leading-6 text-[color:var(--text-primary)] whitespace-pre-wrap">
+          {value}
+        </p>
+        <AnswerActionButton fieldKey={fieldKey} value={value} questionType={questionType} />
+      </>
     );
   }
 
-  return <span className="text-sm text-[color:var(--text-primary)]">{value}</span>;
+  return (
+    <>
+      <span className="text-sm text-[color:var(--text-primary)]">{value}</span>
+      <AnswerActionButton fieldKey={fieldKey} value={value} questionType={questionType} />
+    </>
+  );
 }
 
 function savePdf(response: SurveyResponseSummary, surveyName: string) {
@@ -132,17 +265,22 @@ export function ResponseDetailModal({
   response,
   surveyName,
   questionTypeMap,
+  vaultLoading,
+  onToggleVault,
   onClose,
   onDownloadCertificate
 }: {
   response: SurveyResponseSummary | null;
   surveyName: string;
   questionTypeMap?: Map<string, QuestionType>;
+  vaultLoading?: boolean;
+  onToggleVault?: (response: SurveyResponseSummary) => void;
   onClose: () => void;
   onDownloadCertificate: (cert: { id: string; filename: string }) => void;
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
+  const reduceMotion = useReducedMotion();
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -164,43 +302,84 @@ export function ResponseDetailModal({
   const knownMeta = new Set(["response_id"]);
   const answerEntries = Object.entries(answers).filter(([k]) => !knownMeta.has(k));
 
+  const motionPanel = reduceMotion
+    ? { initial: false, animate: { opacity: 1 }, exit: { opacity: 0 } }
+    : {
+        variants: panelVariants,
+        initial: "hidden",
+        animate: "visible",
+        exit: "exit"
+      };
+
   const content = (
-    <AnimatePresence>
+    <AnimatePresence mode="wait">
       {response ? (
-        <div className="fixed inset-0 z-[90] flex items-end justify-center sm:items-center sm:p-4">
+        <div
+          className={cn(
+            "fixed inset-0 z-[90] flex items-end justify-center sm:items-center sm:p-4",
+            styles.overlay
+          )}
+        >
           {/* Backdrop */}
           <motion.div
-            className="absolute inset-0 bg-[rgba(4,8,6,0.88)] backdrop-blur-[10px]"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.22 }}
+            className="absolute inset-0 bg-[rgba(4,8,6,0.88)]"
+            variants={reduceMotion ? undefined : backdropVariants}
+            initial={reduceMotion ? { opacity: 0 } : "hidden"}
+            animate={reduceMotion ? { opacity: 1 } : "visible"}
+            exit={reduceMotion ? { opacity: 0 } : "exit"}
             onClick={onClose}
           />
 
-          {/* Panel */}
-          <motion.div
-            ref={panelRef}
-            role="dialog"
-            aria-modal="true"
-            aria-label={`Response from ${response.fullName}`}
-            className="relative z-10 flex w-full flex-col overflow-hidden rounded-t-[2rem] border border-[color:var(--glass-border)] bg-[color:var(--bg-elevated)] shadow-[0_32px_96px_rgba(0,0,0,0.5)] sm:max-w-2xl sm:rounded-[2rem]"
-            style={{ maxHeight: "90vh" }}
-            initial={{ opacity: 0, y: 60, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 40, scale: 0.97 }}
-            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-          >
+          <div className={cn("relative z-10 w-full sm:max-w-2xl", styles.panelShell)}>
+            {!reduceMotion ? (
+              <motion.div
+                className={styles.glow}
+                variants={glowVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                aria-hidden
+              />
+            ) : null}
+
+            {/* Panel */}
+            <motion.div
+              ref={panelRef}
+              role="dialog"
+              aria-modal="true"
+              aria-label={`Response from ${response.fullName}`}
+              className={cn(
+                "relative flex w-full flex-col overflow-hidden rounded-t-[2rem] border border-[color:var(--glass-border)] bg-[color:var(--bg-elevated)] sm:rounded-[2rem]",
+                styles.panel
+              )}
+              style={{ maxHeight: "90vh", transformOrigin: "center bottom" }}
+              {...motionPanel}
+            >
             {/* Header */}
             <div className="flex items-start justify-between gap-4 border-b border-[color:var(--border)] px-6 py-5">
               <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
+                <motion.div
+                  className="flex flex-wrap items-center gap-2"
+                  custom={0}
+                  variants={reduceMotion ? undefined : headerItem}
+                  initial={reduceMotion ? false : "hidden"}
+                  animate={reduceMotion ? undefined : "visible"}
+                >
                   <h2 className="font-display text-2xl text-[color:var(--text-primary)]">
                     {response.fullName || "Anonymous"}
                   </h2>
                   <Badge tone="teal" className="font-mono text-xs">#{response.id}</Badge>
-                </div>
-                <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-[color:var(--text-secondary)]">
+                  {response.shortlisted ? (
+                    <Badge tone="success" className="text-[11px]">In talent vault</Badge>
+                  ) : null}
+                </motion.div>
+                <motion.div
+                  className="mt-1 flex flex-wrap items-center gap-3 text-sm text-[color:var(--text-secondary)]"
+                  custom={1}
+                  variants={reduceMotion ? undefined : headerItem}
+                  initial={reduceMotion ? false : "hidden"}
+                  animate={reduceMotion ? undefined : "visible"}
+                >
                   {response.email ? (
                     <span className="flex items-center gap-1.5">
                       <Mail className="h-3.5 w-3.5" />
@@ -211,16 +390,43 @@ export function ResponseDetailModal({
                     <CalendarDays className="h-3.5 w-3.5" />
                     {formatDateTime(response.respondedAt)}
                   </span>
-                </div>
+                </motion.div>
               </div>
-              <button
-                type="button"
-                onClick={onClose}
-                className="focus-ring shrink-0 rounded-full p-2 text-[color:var(--text-secondary)] transition hover:bg-[color:var(--bg-subtle)] hover:text-[color:var(--text-primary)]"
-                aria-label="Close"
-              >
-                <X className="h-5 w-5" />
-              </button>
+              <div className="flex shrink-0 items-center gap-2">
+                {onToggleVault ? (
+                  <motion.div
+                    custom={2}
+                    variants={reduceMotion ? undefined : headerItem}
+                    initial={reduceMotion ? false : "hidden"}
+                    animate={reduceMotion ? undefined : "visible"}
+                  >
+                    <TalentVaultToggle
+                      shortlisted={Boolean(response.shortlisted)}
+                      loading={vaultLoading}
+                      showLabel
+                      onToggle={(event) => {
+                        event.stopPropagation();
+                        onToggleVault(response);
+                      }}
+                    />
+                  </motion.div>
+                ) : null}
+                <motion.button
+                  type="button"
+                  onClick={onClose}
+                  className="focus-ring shrink-0 rounded-full p-2 text-[color:var(--text-secondary)] transition hover:bg-[color:var(--bg-subtle)] hover:text-[color:var(--text-primary)]"
+                  aria-label="Close"
+                  custom={3}
+                  variants={reduceMotion ? undefined : headerItem}
+                  initial={reduceMotion ? false : "hidden"}
+                  animate={reduceMotion ? undefined : "visible"}
+                  whileHover={reduceMotion ? undefined : { rotate: 90, scale: 1.08 }}
+                  whileTap={reduceMotion ? undefined : { scale: 0.92 }}
+                  transition={snapSpring}
+                >
+                  <X className="h-5 w-5" />
+                </motion.button>
+              </div>
             </div>
 
             {/* Body */}
@@ -228,17 +434,29 @@ export function ResponseDetailModal({
 
               {/* Answers */}
               <div className="mb-6">
-                <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
+                <motion.p
+                  className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)]"
+                  custom={0}
+                  variants={reduceMotion ? undefined : headerItem}
+                  initial={reduceMotion ? false : "hidden"}
+                  animate={reduceMotion ? undefined : "visible"}
+                >
                   Answers
-                </p>
+                </motion.p>
                 <div className="space-y-1">
                   {answerEntries.length > 0 ? (
                     answerEntries.map(([key, val], i) => (
                       <motion.div
                         key={key}
-                        initial={{ opacity: 0, x: -12 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.2, delay: i * 0.04 }}
+                        custom={i}
+                        variants={reduceMotion ? undefined : answerCard}
+                        initial={reduceMotion ? false : "hidden"}
+                        animate={reduceMotion ? undefined : "visible"}
+                        whileHover={
+                          reduceMotion
+                            ? undefined
+                            : { y: -2, scale: 1.01, transition: snapSpring }
+                        }
                         className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--bg-surface)] px-4 py-3"
                       >
                         <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[color:var(--text-muted)]">
@@ -262,17 +480,30 @@ export function ResponseDetailModal({
               {/* Certificates */}
               {response.certificates.length > 0 ? (
                 <div>
-                  <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)]">
+                  <motion.p
+                    className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)]"
+                    custom={0}
+                    variants={reduceMotion ? undefined : headerItem}
+                    initial={reduceMotion ? false : "hidden"}
+                    animate={reduceMotion ? undefined : "visible"}
+                  >
                     Uploaded Documents
-                  </p>
+                  </motion.p>
                   <div className="space-y-2">
                     {response.certificates.map((cert, i) => (
                       <motion.button
                         key={cert.id}
                         type="button"
-                        initial={{ opacity: 0, x: -12 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.2, delay: answerEntries.length * 0.04 + i * 0.05 }}
+                        custom={answerEntries.length + i}
+                        variants={reduceMotion ? undefined : answerCard}
+                        initial={reduceMotion ? false : "hidden"}
+                        animate={reduceMotion ? undefined : "visible"}
+                        whileHover={
+                          reduceMotion
+                            ? undefined
+                            : { y: -2, scale: 1.01, transition: snapSpring }
+                        }
+                        whileTap={reduceMotion ? undefined : { scale: 0.98 }}
                         onClick={() => onDownloadCertificate(cert)}
                         className="focus-ring flex w-full items-center gap-3 rounded-2xl border border-[color:var(--border)] bg-[color:var(--bg-surface)] px-4 py-3 text-left transition hover:border-[color:var(--primary)] hover:bg-[rgba(13,148,136,0.08)]"
                       >
@@ -294,7 +525,13 @@ export function ResponseDetailModal({
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-between gap-3 border-t border-[color:var(--border)] px-6 py-4">
+            <motion.div
+              className="flex items-center justify-between gap-3 border-t border-[color:var(--border)] px-6 py-4"
+              variants={reduceMotion ? undefined : footerVariants}
+              initial={reduceMotion ? false : "hidden"}
+              animate={reduceMotion ? undefined : "visible"}
+              exit={reduceMotion ? undefined : "exit"}
+            >
               <Button variant="ghost" onClick={onClose}>
                 Close
               </Button>
@@ -305,8 +542,9 @@ export function ResponseDetailModal({
               >
                 Save as PDF
               </Button>
-            </div>
+            </motion.div>
           </motion.div>
+          </div>
         </div>
       ) : null}
     </AnimatePresence>

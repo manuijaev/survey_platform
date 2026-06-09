@@ -9,7 +9,6 @@ import { useQuestionMutations } from "@/lib/hooks";
 import { surveyApi } from "@/lib/api";
 import { formatApiError } from "@/services/branchingRulesService";
 import type { Question, QuestionPayload } from "@/types/question";
-import type { Survey } from "@/types/survey";
 import styles from "./BranchingRulesPanel.module.css";
 
 function typeLabel(type: Question["type"]) {
@@ -36,17 +35,9 @@ function typeLabel(type: Question["type"]) {
 
 type TargetQuestionsPanelProps = {
   surveyId: string;
-  surveyName?: string;
-  surveys?: Survey[];
-  onSurveyChange?: (surveyId: string) => void;
 };
 
-export function TargetQuestionsPanel({
-  surveyId,
-  surveyName,
-  surveys = [],
-  onSurveyChange
-}: TargetQuestionsPanelProps) {
+export function TargetQuestionsPanel({ surveyId }: TargetQuestionsPanelProps) {
   const { createQuestion, updateQuestion, deleteQuestion } = useQuestionMutations(surveyId);
 
   const [targetQuestions, setTargetQuestions] = useState<Question[]>([]);
@@ -177,23 +168,6 @@ export function TargetQuestionsPanel({
           Target questions
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {surveys.length > 0 && onSurveyChange ? (
-            <select
-              id="target-panel-survey"
-              className={styles.select}
-              value={surveyId}
-              onChange={(event) => onSurveyChange(event.target.value)}
-              aria-label="Survey"
-            >
-              {surveys.map((survey) => (
-                <option key={survey.id} value={survey.id}>
-                  {survey.name}
-                </option>
-              ))}
-            </select>
-          ) : surveyName ? (
-            <span className={styles.surveyPill}>{surveyName}</span>
-          ) : null}
           <Button type="button" size="sm" leftIcon={<Plus className="h-4 w-4" />} onClick={openCreate}>
             Create target question
           </Button>

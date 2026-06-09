@@ -26,4 +26,11 @@ export type SurveyResponseSummary = {
   certificates: Array<{ id: string; filename: string }>;
   respondedAt: string;
   answers?: Record<string, string>;
+  shortlisted?: boolean;
+};
+
+export type ShortlistStatus = {
+  responseId: string;
+  shortlisted: boolean;
+  vaultCount: number;
 };

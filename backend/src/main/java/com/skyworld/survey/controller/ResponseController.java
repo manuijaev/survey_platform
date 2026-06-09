@@ -4,14 +4,18 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.skyworld.survey.dto.request.QuestionResponseRequest;
 import com.skyworld.survey.dto.response.PaginatedResponseWrapper;
 import com.skyworld.survey.dto.response.QuestionResponseItemDto;
+import com.skyworld.survey.dto.response.ShortlistStatusDto;
 import com.skyworld.survey.service.ResponseService;
+import com.skyworld.survey.service.ShortlistService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -27,6 +31,7 @@ import java.util.List;
 public class ResponseController {
 
     private final ResponseService responseService;
+    private final ShortlistService shortlistService;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<QuestionResponseItemDto> submitResponse(@PathVariable Long surveyId,
@@ -45,7 +50,20 @@ public class ResponseController {
     public ResponseEntity<PaginatedResponseWrapper> getResponses(@PathVariable Long surveyId,
                                                                  @RequestParam(defaultValue = "1") int page,
                                                                  @RequestParam(defaultValue = "10") int pageSize,
-                                                                 @RequestParam(required = false) String email) {
-        return ResponseEntity.ok(responseService.getResponses(surveyId, page, pageSize, email));
+                                                                 @RequestParam(required = false) String email,
+                                                                 @RequestParam(required = false) Boolean shortlisted) {
+        return ResponseEntity.ok(responseService.getResponses(surveyId, page, pageSize, email, shortlisted));
+    }
+
+    @PutMapping("/{responseId}/shortlist")
+    public ResponseEntity<ShortlistStatusDto> addToShortlist(@PathVariable Long surveyId,
+                                                             @PathVariable Long responseId) {
+        return ResponseEntity.ok(shortlistService.addToShortlist(surveyId, responseId));
+    }
+
+    @DeleteMapping("/{responseId}/shortlist")
+    public ResponseEntity<ShortlistStatusDto> removeFromShortlist(@PathVariable Long surveyId,
+                                                                  @PathVariable Long responseId) {
+        return ResponseEntity.ok(shortlistService.removeFromShortlist(surveyId, responseId));
     }
 }

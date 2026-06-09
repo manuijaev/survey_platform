@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   ChevronLeft,
   ChevronRight,
@@ -11,8 +11,11 @@ import {
   Mail,
   CalendarDays,
   ChevronRight as Arrow,
-  Users
+  Users,
+  BookmarkCheck,
+  Inbox
 } from "lucide-react";
+import { TalentVaultToggle } from "@/components/admin/TalentVaultToggle";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -20,110 +23,151 @@ import { Input } from "@/components/ui/Input";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { ResponseAnswerActions } from "@/components/admin/ResponseAnswerActions";
 import { ResponseDetailModal } from "@/components/admin/ResponseDetailModal";
-import { useQuestions, useResponses, useResponsesActions, useSurvey } from "@/lib/hooks";
+import { useQuestions, useResponses, useResponsesActions, useSurvey, useTalentVault } from "@/lib/hooks";
 import { buildQuestionTypeMap, collectResponseActions } from "@/lib/responseAnswerActions";
 import { cn, formatDateTime, formatRelativeTime } from "@/lib/utils";
 import type { QuestionType } from "@/types/question";
 import type { SurveyResponseSummary } from "@/types/survey";
 
 const pageSizeOptions = [10, 25, 50] as const;
+type ResponseView = "all" | "vault";
 
 function ResponseCard({
   response,
   index,
   questionTypeMap,
-  onClick
+  vaultLoading,
+  onClick,
+  onToggleVault
 }: {
   response: SurveyResponseSummary;
   index: number;
   questionTypeMap?: Map<string, QuestionType>;
+  vaultLoading?: boolean;
   onClick: () => void;
+  onToggleVault: (response: SurveyResponseSummary) => void;
 }) {
   const answers = response.answers ?? {};
   const answerCount = Object.keys(answers).length;
   const hasCerts = response.certificates.length > 0;
   const quickActions = collectResponseActions(response, questionTypeMap).slice(0, 3);
+  const reduceMotion = useReducedMotion();
+  const cardSpring = { type: "spring" as const, stiffness: 400, damping: 26 };
 
   return (
-    <motion.button
-      type="button"
-      onClick={onClick}
-      initial={{ opacity: 0, y: 14 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25, ease: "easeOut", delay: index * 0.05 }}
+    <motion.div
+      initial={{ opacity: 0, y: 18, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{
+        opacity: { duration: 0.3, delay: index * 0.05 },
+        y: { ...cardSpring, delay: index * 0.05 },
+        scale: cardSpring
+      }}
+      whileHover={
+        reduceMotion
+          ? undefined
+          : { y: -6, scale: 1.015, transition: cardSpring }
+      }
       className={cn(
-        "group w-full rounded-2xl border border-[color:var(--border)] bg-[color:var(--bg-surface)] p-5 text-left",
-        "transition duration-200 hover:-translate-y-0.5 hover:border-[color:var(--border-active)]",
-        "hover:shadow-[0_0_0_1px_rgba(13,148,136,0.18),0_8px_32px_rgba(0,0,0,0.24)]"
+        "group w-full rounded-2xl border bg-[color:var(--bg-surface)] p-4 sm:p-5",
+        response.shortlisted
+          ? "border-[rgba(13,148,136,0.35)] shadow-[0_0_0_1px_rgba(13,148,136,0.2),0_12px_36px_rgba(13,148,136,0.1)]"
+          : "border-[color:var(--border)] hover:border-[color:var(--border-active)] hover:shadow-[0_0_0_1px_rgba(13,148,136,0.18),0_12px_36px_rgba(0,0,0,0.28)]"
       )}
     >
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0 flex-1">
-          {/* Name + ID */}
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="font-semibold text-[color:var(--text-primary)]">
-              {response.fullName || "Anonymous"}
-            </span>
-            <Badge tone="neutral" className="font-mono text-[11px]">#{response.id}</Badge>
-            {hasCerts ? (
-              <Badge tone="warning" className="text-[11px]">
-                {response.certificates.length} doc{response.certificates.length > 1 ? "s" : ""}
-              </Badge>
-            ) : null}
-          </div>
-
-          {/* Email + Date */}
-          <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-[color:var(--text-secondary)]">
-            {response.email ? (
-              <span className="flex items-center gap-1.5">
-                <Mail className="h-3.5 w-3.5 shrink-0 text-[color:var(--text-muted)]" />
-                {response.email}
-              </span>
-            ) : null}
-            <span className="flex items-center gap-1.5">
-              <CalendarDays className="h-3.5 w-3.5 shrink-0 text-[color:var(--text-muted)]" />
-              <span title={formatDateTime(response.respondedAt)}>
-                {formatRelativeTime(response.respondedAt)}
-              </span>
-            </span>
-          </div>
-
-          {/* Quick actions: email / portfolio / external links */}
-          {quickActions.length > 0 ? (
-            <ResponseAnswerActions
-              actions={quickActions}
-              className="mt-3 flex flex-wrap gap-2"
-              onActionClick={(event) => event.stopPropagation()}
-            />
-          ) : null}
-
-          {/* Answer preview chips */}
-          {answerCount > 0 ? (
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              {Object.entries(answers)
-                .slice(0, 4)
-                .map(([key, val]) => (
-                  <span
-                    key={key}
-                    className="max-w-[14rem] truncate rounded-full border border-[color:var(--border)] bg-[color:var(--bg-elevated)] px-2.5 py-0.5 font-mono text-[11px] text-[color:var(--text-secondary)]"
-                    title={`${key}: ${val}`}
-                  >
-                    {val || "—"}
-                  </span>
-                ))}
-              {answerCount > 4 ? (
-                <span className="rounded-full border border-[color:var(--border)] bg-[color:var(--bg-elevated)] px-2.5 py-0.5 font-mono text-[11px] text-[color:var(--text-muted)]">
-                  +{answerCount - 4} more
+      <div className="flex items-start gap-3 sm:gap-4">
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={onClick}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              onClick();
+            }
+          }}
+          className="min-w-0 flex-1 cursor-pointer text-left focus-ring rounded-xl"
+        >
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              {/* Name + ID */}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-semibold text-[color:var(--text-primary)]">
+                  {response.fullName || "Anonymous"}
                 </span>
+                <Badge tone="neutral" className="font-mono text-[11px]">#{response.id}</Badge>
+                {response.shortlisted ? (
+                  <Badge tone="success" className="text-[11px]">Vault</Badge>
+                ) : null}
+                {hasCerts ? (
+                  <Badge tone="warning" className="text-[11px]">
+                    {response.certificates.length} doc{response.certificates.length > 1 ? "s" : ""}
+                  </Badge>
+                ) : null}
+              </div>
+
+              {/* Email + Date */}
+              <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-[color:var(--text-secondary)]">
+                {response.email ? (
+                  <span className="flex items-center gap-1.5">
+                    <Mail className="h-3.5 w-3.5 shrink-0 text-[color:var(--text-muted)]" />
+                    {response.email}
+                  </span>
+                ) : null}
+                <span className="flex items-center gap-1.5">
+                  <CalendarDays className="h-3.5 w-3.5 shrink-0 text-[color:var(--text-muted)]" />
+                  <span title={formatDateTime(response.respondedAt)}>
+                    {formatRelativeTime(response.respondedAt)}
+                  </span>
+                </span>
+              </div>
+
+              {/* Answer preview chips */}
+              {answerCount > 0 ? (
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {Object.entries(answers)
+                    .slice(0, 4)
+                    .map(([key, val]) => (
+                      <span
+                        key={key}
+                        className="max-w-[14rem] truncate rounded-full border border-[color:var(--border)] bg-[color:var(--bg-elevated)] px-2.5 py-0.5 font-mono text-[11px] text-[color:var(--text-secondary)]"
+                        title={`${key}: ${val}`}
+                      >
+                        {val || "—"}
+                      </span>
+                    ))}
+                  {answerCount > 4 ? (
+                    <span className="rounded-full border border-[color:var(--border)] bg-[color:var(--bg-elevated)] px-2.5 py-0.5 font-mono text-[11px] text-[color:var(--text-muted)]">
+                      +{answerCount - 4} more
+                    </span>
+                  ) : null}
+                </div>
               ) : null}
             </div>
-          ) : null}
+
+            <Arrow className="h-5 w-5 shrink-0 text-[color:var(--text-muted)] transition group-hover:translate-x-0.5 group-hover:text-[color:var(--primary)]" />
+          </div>
         </div>
 
-        {/* Chevron */}
-        <Arrow className="h-5 w-5 shrink-0 text-[color:var(--text-muted)] transition group-hover:translate-x-0.5 group-hover:text-[color:var(--primary)]" />
+        <TalentVaultToggle
+          shortlisted={Boolean(response.shortlisted)}
+          loading={vaultLoading}
+          size="md"
+          onToggle={(event) => {
+            event.stopPropagation();
+            onToggleVault(response);
+          }}
+        />
       </div>
-    </motion.button>
+
+      {quickActions.length > 0 ? (
+        <ResponseAnswerActions
+          actions={quickActions}
+          className="mt-3 flex flex-wrap gap-2"
+          onActionClick={(event) => event.stopPropagation()}
+        />
+      ) : null}
+    </motion.div>
   );
 }
 
@@ -156,21 +200,45 @@ export default function SurveyResponsesPage() {
     [questionsQuery.data]
   );
 
+  const [view, setView] = useState<ResponseView>("all");
   const [emailFilter, setEmailFilter] = useState("");
   const [debouncedEmail, setDebouncedEmail] = useState("");
   const [pageSize, setPageSize] = useState<(typeof pageSizeOptions)[number]>(10);
   const [page, setPage] = useState(1);
   const [selectedResponse, setSelectedResponse] = useState<SurveyResponseSummary | null>(null);
+  const [vaultTargetId, setVaultTargetId] = useState<string | null>(null);
 
   useEffect(() => {
     const t = window.setTimeout(() => setDebouncedEmail(emailFilter), 400);
     return () => window.clearTimeout(t);
   }, [emailFilter]);
 
-  useEffect(() => { setPage(1); }, [debouncedEmail, pageSize]);
+  useEffect(() => { setPage(1); }, [debouncedEmail, pageSize, view]);
 
-  const responsesQuery = useResponses(surveyId, { email: debouncedEmail, page, size: pageSize });
+  const responsesQuery = useResponses(surveyId, {
+    email: debouncedEmail,
+    page,
+    size: pageSize,
+    shortlisted: view === "vault"
+  });
+  const vaultCountQuery = useResponses(surveyId, { shortlisted: true, page: 1, size: 1 });
   const { downloadCertificate } = useResponsesActions(surveyId);
+  const { toggleVault } = useTalentVault(surveyId);
+
+  const handleToggleVault = (response: SurveyResponseSummary) => {
+    setVaultTargetId(response.id);
+    toggleVault.mutate(
+      { response, nextShortlisted: !response.shortlisted },
+      {
+        onSettled: () => setVaultTargetId(null),
+        onSuccess: () => {
+          if (selectedResponse?.id === response.id) {
+            setSelectedResponse({ ...response, shortlisted: !response.shortlisted });
+          }
+        }
+      }
+    );
+  };
 
   const data = responsesQuery.data;
   const responses: SurveyResponseSummary[] = data?.items ?? [];
@@ -185,6 +253,7 @@ export default function SurveyResponsesPage() {
   }, [page, lastPage]);
 
   const surveyName = surveyQuery.data?.name ?? "Survey";
+  const vaultCount = vaultCountQuery.data?.totalCount ?? 0;
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
@@ -210,15 +279,61 @@ export default function SurveyResponsesPage() {
               {surveyName}
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-[color:var(--text-secondary)]">
-              Click any response to view full answers, email candidates, open portfolio links, save as PDF, or download documents.
+              Review submissions, save standout candidates to your talent vault, and return to them anytime.
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <span className="flex items-center gap-2 rounded-2xl border border-[color:var(--border)] bg-[color:var(--bg-surface)] px-4 py-2 font-mono text-sm text-[color:var(--text-primary)]">
               <Users className="h-4 w-4 text-[color:var(--primary)]" />
-              {totalCount} response{totalCount !== 1 ? "s" : ""}
+              {view === "vault" ? vaultCount : totalCount}{" "}
+              {view === "vault"
+                ? `saved candidate${vaultCount !== 1 ? "s" : ""}`
+                : `response${totalCount !== 1 ? "s" : ""}`}
             </span>
+            {view === "all" && vaultCount > 0 ? (
+              <span className="flex items-center gap-2 rounded-2xl border border-[rgba(13,148,136,0.28)] bg-[rgba(13,148,136,0.1)] px-4 py-2 text-sm text-[color:var(--accent)]">
+                <BookmarkCheck className="h-4 w-4" />
+                {vaultCount} in vault
+              </span>
+            ) : null}
           </div>
+        </div>
+      </div>
+
+      {/* View tabs */}
+      <div className="mb-4 -mx-1 overflow-x-auto px-1 pb-1">
+        <div className="inline-flex min-w-full gap-2 sm:min-w-0">
+          <button
+            type="button"
+            onClick={() => setView("all")}
+            className={cn(
+              "focus-ring inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-2xl border px-4 py-2.5 text-sm font-medium transition sm:flex-none",
+              view === "all"
+                ? "border-[color:var(--primary)] bg-[rgba(13,148,136,0.14)] text-[color:var(--text-primary)]"
+                : "border-[color:var(--border)] bg-[color:var(--bg-surface)] text-[color:var(--text-secondary)] hover:border-[color:var(--border-active)]"
+            )}
+          >
+            <Inbox className="h-4 w-4 shrink-0" />
+            All responses
+          </button>
+          <button
+            type="button"
+            onClick={() => setView("vault")}
+            className={cn(
+              "focus-ring inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-2xl border px-4 py-2.5 text-sm font-medium transition sm:flex-none",
+              view === "vault"
+                ? "border-[color:var(--primary)] bg-[rgba(13,148,136,0.14)] text-[color:var(--text-primary)]"
+                : "border-[color:var(--border)] bg-[color:var(--bg-surface)] text-[color:var(--text-secondary)] hover:border-[color:var(--border-active)]"
+            )}
+          >
+            <BookmarkCheck className="h-4 w-4 shrink-0" />
+            Talent vault
+            {vaultCount > 0 ? (
+              <span className="rounded-full bg-[rgba(13,148,136,0.2)] px-2 py-0.5 font-mono text-[11px]">
+                {vaultCount}
+              </span>
+            ) : null}
+          </button>
         </div>
       </div>
 
@@ -267,16 +382,26 @@ export default function SurveyResponsesPage() {
               response={response}
               index={index}
               questionTypeMap={questionTypeMap}
+              vaultLoading={vaultTargetId === response.id && toggleVault.isPending}
               onClick={() => setSelectedResponse(response)}
+              onToggleVault={handleToggleVault}
             />
           ))}
         </div>
       ) : (
         <EmptyState
-          title="Awaiting responses"
-          description="Share this survey link to start collecting answers."
-          actionLabel="Copy survey link"
+          title={view === "vault" ? "Talent vault is empty" : "Awaiting responses"}
+          description={
+            view === "vault"
+              ? "Bookmark candidates from the full response list to build your shortlist for future reference."
+              : "Share this survey link to start collecting answers."
+          }
+          actionLabel={view === "vault" ? "Browse all responses" : "Copy survey link"}
           onAction={async () => {
+            if (view === "vault") {
+              setView("all");
+              return;
+            }
             await navigator.clipboard.writeText(`${window.location.origin}/surveys/${surveyId}`);
           }}
         />
@@ -326,6 +451,8 @@ export default function SurveyResponsesPage() {
         response={selectedResponse}
         surveyName={surveyName}
         questionTypeMap={questionTypeMap}
+        vaultLoading={Boolean(selectedResponse && vaultTargetId === selectedResponse.id && toggleVault.isPending)}
+        onToggleVault={handleToggleVault}
         onClose={() => setSelectedResponse(null)}
         onDownloadCertificate={(cert) => downloadCertificate.mutate(cert)}
       />

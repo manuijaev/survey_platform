@@ -32,6 +32,10 @@ public class DynamicResponseSerializer extends JsonSerializer<QuestionResponseIt
             .certificates(certificates == null ? List.of() : certificates)
             .build());
 
+        if (Boolean.TRUE.equals(value.getShortlisted())) {
+            gen.writeStringField("shortlisted", "yes");
+        }
+
         gen.writeStringField("date_responded", value.getDateResponded());
         gen.writeEndObject();
     }

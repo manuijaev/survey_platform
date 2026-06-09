@@ -23,4 +23,5 @@ public class QuestionResponseItemDto {
     private LinkedHashMap<String, String> answers;
     private List<CertificateResponseDto> certificates;
     private String dateResponded;
+    private Boolean shortlisted;
 }

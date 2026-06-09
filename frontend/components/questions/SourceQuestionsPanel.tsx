@@ -40,7 +40,6 @@ import { surveyApi } from "@/lib/api";
 import { formatApiError } from "@/services/branchingRulesService";
 import { cn, truncate } from "@/lib/utils";
 import type { Question, QuestionPayload } from "@/types/question";
-import type { Survey } from "@/types/survey";
 import styles from "./BranchingRulesPanel.module.css";
 
 function typeBadgeMeta(type: Question["type"]) {
@@ -213,15 +212,11 @@ function BranchTargetRow({ question }: { question: Question }) {
 type SourceQuestionsPanelProps = {
   surveyId: string;
   surveyName?: string;
-  surveys?: Survey[];
-  onSurveyChange?: (surveyId: string) => void;
 };
 
 export function SourceQuestionsPanel({
   surveyId,
-  surveyName,
-  surveys = [],
-  onSurveyChange
+  surveyName
 }: SourceQuestionsPanelProps) {
   const { createQuestion, updateQuestion, deleteQuestion, reorderQuestions } = useQuestionMutations(surveyId);
 
@@ -372,23 +367,6 @@ export function SourceQuestionsPanel({
           Source questions
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {surveys.length > 0 && onSurveyChange ? (
-            <select
-              id="source-panel-survey"
-              className={styles.select}
-              value={surveyId}
-              onChange={(event) => onSurveyChange(event.target.value)}
-              aria-label="Survey"
-            >
-              {surveys.map((survey) => (
-                <option key={survey.id} value={survey.id}>
-                  {survey.name}
-                </option>
-              ))}
-            </select>
-          ) : surveyName ? (
-            <span className={styles.surveyPill}>{surveyName}</span>
-          ) : null}
           <Button type="button" size="sm" leftIcon={<Plus className="h-4 w-4" />} onClick={openCreate}>
             Add question
           </Button>

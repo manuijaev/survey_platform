@@ -1,9 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useParams, usePathname } from "next/navigation";
-import { BarChart3, FileText, ListChecks, ScrollText, Waves } from "lucide-react";
+import { useParams, usePathname, useRouter } from "next/navigation";
+import { BarChart3, FileText, ListChecks, LogOut, ScrollText, Waves } from "lucide-react";
+import { useState } from "react";
+import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
+import { toastService } from "@/lib/toast-service";
 import type { ReactNode } from "react";
 
 const primaryNav = [
@@ -14,8 +17,24 @@ const primaryNav = [
 
 export function AdminShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const params = useParams<{ surveyId?: string }>();
   const surveyId = params.surveyId;
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      toastService.success("Signed out", "Returning to the candidate survey dashboard.");
+      router.replace("/surveys");
+      router.refresh();
+    } catch {
+      toastService.error("Sign out failed", "Please try again.");
+    } finally {
+      setLoggingOut(false);
+    }
+  };
 
   const buildHref = (segment: string) => {
     if (segment === "/admin/surveys") return segment;
@@ -72,9 +91,20 @@ export function AdminShell({ children }: { children: ReactNode }) {
           </div>
         ) : null}
 
-        <div className="mt-auto rounded-2xl border border-[color:var(--border)] bg-[rgba(13,148,136,0.08)] p-4">
-          <div className="text-sm font-medium text-[color:var(--text-primary)]">Live backend</div>
-          <div className="mt-1 text-sm text-[color:var(--text-secondary)]">http://localhost:8080</div>
+        <div className="mt-auto space-y-3">
+          <Button
+            variant="outline"
+            className="w-full"
+            leftIcon={<LogOut className="h-4 w-4" />}
+            loading={loggingOut}
+            onClick={handleLogout}
+          >
+            Log out to surveys
+          </Button>
+          <div className="rounded-2xl border border-[color:var(--border)] bg-[rgba(13,148,136,0.08)] p-4">
+            <div className="text-sm font-medium text-[color:var(--text-primary)]">Live backend</div>
+            <div className="mt-1 text-sm text-[color:var(--text-secondary)]">http://localhost:8080</div>
+          </div>
         </div>
       </aside>
 
@@ -90,7 +120,15 @@ export function AdminShell({ children }: { children: ReactNode }) {
               </span>
               <div className="font-display text-lg text-[color:var(--text-primary)]">Control</div>
             </Link>
-            <div className="text-xs uppercase tracking-[0.18em] text-[color:var(--text-muted)]">Admin</div>
+            <Button
+              variant="ghost"
+              size="sm"
+              leftIcon={<LogOut className="h-4 w-4" />}
+              loading={loggingOut}
+              onClick={handleLogout}
+            >
+              Log out
+            </Button>
           </div>
         </div>
         <main className="min-h-screen">{children}</main>

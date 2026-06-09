@@ -10,7 +10,7 @@ import {
   toNumber,
   slugify
 } from "./utils";
-import type { Survey, SurveyPayload, SurveyResponseSummary } from "@/types/survey";
+import type { ShortlistStatus, Survey, SurveyPayload, SurveyResponseSummary } from "@/types/survey";
 import type { Question, QuestionOption, QuestionPayload, QuestionType } from "@/types/question";
 import type { NextQuestionResponse, SurveySubmissionPayload } from "@/types/response";
 import type { SurveyRulePayload, SurveyRule } from "@/types/rule";
@@ -331,7 +331,10 @@ const toResponses = (payload: unknown): PaginatedResponses => {
     const dateResponded = safeText(data.date_responded || data.dateResponded || data.respondedAt);
 
     // Dynamic answer keys — everything except known metadata fields
-    const SKIP = new Set(["response_id", "certificates", "date_responded", "@_response_id"]);
+    const SKIP = new Set(["response_id", "certificates", "date_responded", "shortlisted", "@_response_id"]);
+    const shortlisted =
+      safeText(data.shortlisted).toLowerCase() === "yes" ||
+      safeText(data["@_shortlisted"]).toLowerCase() === "yes";
     const answers: Record<string, string> = {};
     for (const [key, value] of Object.entries(data)) {
       if (!SKIP.has(key) && !key.startsWith("@_")) {
@@ -353,6 +356,7 @@ const toResponses = (payload: unknown): PaginatedResponses => {
           : [],
       certificates,
       respondedAt: dateResponded,
+      shortlisted,
       answers // expose raw answers for generic rendering
     } as SurveyResponseSummary & { answers: Record<string, string> };
   });
@@ -446,15 +450,46 @@ export const surveyApi = {
     }),
   getResponses: async (
     surveyId: string,
-    params?: { email?: string; page?: number; size?: number }
+    params?: { email?: string; page?: number; size?: number; shortlisted?: boolean }
   ) =>
     toResponses(
       await requestXml<unknown>({
         url: `/api/surveys/${surveyId}/responses`,
         method: "GET",
-        params
+        params: {
+          ...params,
+          ...(params?.shortlisted ? { shortlisted: true } : {})
+        }
       })
     ),
+  addToTalentVault: async (surveyId: string, responseId: string): Promise<ShortlistStatus> => {
+    const root = parsePayload<Record<string, unknown>>(
+      await requestXml<unknown>({
+        url: `/api/surveys/${surveyId}/responses/${responseId}/shortlist`,
+        method: "PUT"
+      })
+    );
+    const data = (root.shortlist_status ?? root) as Record<string, unknown>;
+    return {
+      responseId: safeText(data["@_response_id"] || data.response_id || responseId),
+      shortlisted: safeText(data["@_shortlisted"] || data.shortlisted).toLowerCase() === "yes",
+      vaultCount: toNumber(data["@_vault_count"] ?? data.vault_count ?? 0)
+    };
+  },
+  removeFromTalentVault: async (surveyId: string, responseId: string): Promise<ShortlistStatus> => {
+    const root = parsePayload<Record<string, unknown>>(
+      await requestXml<unknown>({
+        url: `/api/surveys/${surveyId}/responses/${responseId}/shortlist`,
+        method: "DELETE"
+      })
+    );
+    const data = (root.shortlist_status ?? root) as Record<string, unknown>;
+    return {
+      responseId: safeText(data["@_response_id"] || data.response_id || responseId),
+      shortlisted: safeText(data["@_shortlisted"] || data.shortlisted).toLowerCase() === "yes",
+      vaultCount: toNumber(data["@_vault_count"] ?? data.vault_count ?? 0)
+    };
+  },
   downloadCertificate: async (certificateId: string) =>
     api.get(`/api/certificates/${certificateId}`, {
       responseType: "blob",

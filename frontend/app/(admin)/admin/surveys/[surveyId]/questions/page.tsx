@@ -80,7 +80,10 @@ export default function QuestionManagementPage() {
               id="survey-selector"
               className="focus-ring h-11 min-w-[220px] rounded-xl border border-[color:var(--border)] bg-[color:var(--bg-surface)] px-4 text-sm text-[color:var(--text-primary)]"
               value={surveyId}
-              onChange={(event) => router.push(`/admin/surveys/${event.target.value}/questions?tab=${questionTab}`)}
+              onChange={(event) => {
+                const tab = activeSection === "branching" ? "branching" : questionTab;
+                router.push(`/admin/surveys/${event.target.value}/questions?tab=${tab}`);
+              }}
             >
               {(surveysQuery.data ?? []).map((survey) => (
                 <option key={survey.id} value={survey.id}>
@@ -104,23 +107,9 @@ export default function QuestionManagementPage() {
           {activeSection === "branching" ? (
             <BranchingRulesPanel surveyId={surveyId} surveyName={surveyQuery.data?.name} />
           ) : questionTab === "target" ? (
-            <TargetQuestionsPanel
-              surveyId={surveyId}
-              surveyName={surveyQuery.data?.name}
-              surveys={surveysQuery.data ?? []}
-              onSurveyChange={(nextSurveyId) =>
-                router.push(`/admin/surveys/${nextSurveyId}/questions?tab=target`)
-              }
-            />
+            <TargetQuestionsPanel surveyId={surveyId} />
           ) : (
-            <SourceQuestionsPanel
-              surveyId={surveyId}
-              surveyName={surveyQuery.data?.name}
-              surveys={surveysQuery.data ?? []}
-              onSurveyChange={(nextSurveyId) =>
-                router.push(`/admin/surveys/${nextSurveyId}/questions?tab=source`)
-              }
-            />
+            <SourceQuestionsPanel surveyId={surveyId} surveyName={surveyQuery.data?.name} />
           )}
         </div>
       </div>

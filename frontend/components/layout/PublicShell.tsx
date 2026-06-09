@@ -8,7 +8,7 @@ import type { ReactNode } from "react";
 
 const navItems = [
   { href: "/surveys", label: "Surveys", icon: Waves },
-  { href: "/admin/surveys", label: "Admin", icon: Settings2 }
+  { href: "/admin/login", label: "Admin", icon: Settings2 }
 ];
 
 export function PublicShell({ children }: { children: ReactNode }) {
