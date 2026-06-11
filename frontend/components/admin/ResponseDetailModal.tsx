@@ -215,11 +215,20 @@ function CertificatePreviewPanel({
           Close preview
         </Button>
       </div>
-      <iframe
-        src={url}
-        title={`Preview ${filename}`}
-        className="min-h-0 flex-1 w-full bg-white"
-      />
+      <div className="relative min-h-0 flex-1 bg-neutral-100">
+        <object
+          data={url}
+          type="application/pdf"
+          title={`Preview ${filename}`}
+          className="absolute inset-0 h-full w-full bg-white"
+        >
+          <iframe
+            src={url}
+            title={`Preview ${filename}`}
+            className="absolute inset-0 h-full w-full border-0 bg-white"
+          />
+        </object>
+      </div>
     </div>
   );
 }
@@ -451,8 +460,13 @@ export function ResponseDetailModal({
   const handlePreviewCertificate = async (cert: { id: string; filename: string }) => {
     setPreviewLoadingId(cert.id);
     try {
-      const fileResponse = await surveyApi.downloadCertificate(cert.id);
-      const url = URL.createObjectURL(fileResponse.data as Blob);
+      const fileResponse = await surveyApi.previewCertificate(cert.id);
+      const rawBlob = fileResponse.data as Blob;
+      const pdfBlob =
+        rawBlob.type === "application/pdf"
+          ? rawBlob
+          : new Blob([rawBlob], { type: "application/pdf" });
+      const url = URL.createObjectURL(pdfBlob);
       if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
       previewUrlRef.current = url;
       setPreview({ filename: cert.filename, url });

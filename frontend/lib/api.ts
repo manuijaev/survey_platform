@@ -22,6 +22,11 @@ import type { SurveyRulePayload, SurveyRule } from "@/types/rule";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
+const blobApi: AxiosInstance = axios.create({
+  baseURL: BASE_URL,
+  responseType: "blob"
+});
+
 const api: AxiosInstance = axios.create({
   baseURL: BASE_URL,
   headers: {
@@ -498,10 +503,9 @@ export const surveyApi = {
     };
   },
   downloadCertificate: async (certificateId: string) =>
-    api.get(`/api/certificates/${certificateId}`, {
-      responseType: "blob",
-      headers: { Accept: "application/pdf" }
-    }),
+    blobApi.get(`/api/certificates/${certificateId}`),
+  previewCertificate: async (certificateId: string) =>
+    blobApi.get(`/api/certificates/${certificateId}/preview`),
   getNextQuestion: async (
     surveyId: string,
     answeredQuestions: string[],
