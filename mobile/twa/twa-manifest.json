@@ -1,0 +1,52 @@
+{
+  "packageId": "com.skyworld.survey",
+  "host": "survey-platform-lemon-one.vercel.app",
+  "name": "SkyWorld Survey Platform",
+  "launcherName": "SkyWorld",
+  "display": "standalone",
+  "themeColor": "#060A09",
+  "themeColorDark": "#060A09",
+  "navigationColor": "#060A09",
+  "navigationColorDark": "#000000",
+  "navigationDividerColor": "#060A09",
+  "navigationDividerColorDark": "#000000",
+  "backgroundColor": "#060A09",
+  "enableNotifications": false,
+  "startUrl": "/surveys",
+  "iconUrl": "https://survey-platform-lemon-one.vercel.app/icons/icon-512.png",
+  "maskableIconUrl": "https://survey-platform-lemon-one.vercel.app/icons/icon-512.png",
+  "monochromeIconUrl": "https://survey-platform-lemon-one.vercel.app/icons/icon-512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "android"
+  },
+  "appVersionName": "1.0.0",
+  "appVersionCode": 2,
+  "shortcuts": [
+    {
+      "name": "Browse surveys",
+      "shortName": "Surveys",
+      "url": "/surveys",
+      "chosenIconUrl": "https://survey-platform-lemon-one.vercel.app/icons/icon-192.png"
+    }
+  ],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://survey-platform-lemon-one.vercel.app/manifest.webmanifest",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": false,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://survey-platform-lemon-one.vercel.app/",
+  "minSdkVersion": 21,
+  "orientation": "portrait-primary",
+  "fingerprints": [],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "displayOverride": [],
+  "appVersion": "1.0.0"
+}

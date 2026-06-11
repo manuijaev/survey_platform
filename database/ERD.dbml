@@ -1,0 +1,142 @@
+// SkyWorld Survey Platform - sky_survey_db
+// Import at https://dbdiagram.io/d -> Import -> paste this file
+// Export: Menu -> Export -> PNG / PDF
+
+Project sky_survey_db {
+  database_type: 'PostgreSQL'
+  Note: 'Dynamic surveys, branching questions, responses, PDF certificates'
+}
+
+Table survey {
+  id bigint [pk, increment, note: 'PK surrogate key']
+  name varchar(255) [not null, note: 'Survey display name']
+  description text [note: 'Optional long description']
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp [not null, default: `now()`]
+
+  Note: 'Root entity. One survey has many questions and responses.'
+}
+
+Table question {
+  id bigint [pk, increment, note: 'PK surrogate key']
+  survey_id bigint [not null, note: 'FK to survey.id ON DELETE CASCADE']
+  name varchar(255) [not null, note: 'Stable slug e.g. full_name']
+  type varchar(50) [not null, note: 'SHORT_TEXT LONG_TEXT EMAIL SINGLE_CHOICE MULTIPLE_CHOICE FILE_UPLOAD NUMBER']
+  "text" text [not null, note: 'Prompt shown to respondent (column name: text)']
+  description text [note: 'Helper text under the prompt']
+  required boolean [not null, default: false]
+  order_index int [note: 'Display order within survey']
+  file_format varchar(64) [note: 'FILE_UPLOAD only e.g. .pdf']
+  max_file_size_mb int [note: 'FILE_UPLOAD max size MB']
+  multiple_files boolean [note: 'FILE_UPLOAD allow multiple files']
+  min_number int [note: 'NUMBER min value']
+  max_number int [note: 'NUMBER max value']
+  branch_only boolean [not null, default: false, note: 'Hidden until skill_tree_rule unlocks']
+
+  indexes {
+    (survey_id, order_index) [name: 'idx_question_survey_order']
+    (survey_id, name) [unique, name: 'uk_question_survey_name']
+  }
+
+  Note: 'Configurable question. Choice options in question_option.'
+}
+
+Table question_option {
+  id bigint [pk, increment, note: 'PK surrogate key']
+  question_id bigint [not null, note: 'FK to question.id ON DELETE CASCADE']
+  value varchar(255) [not null, note: 'API wire value e.g. REACT']
+  label varchar(255) [not null, note: 'Human-readable label']
+  order_index int [note: 'Option display order']
+
+  indexes {
+    (question_id, value) [unique, name: 'uk_question_option_question_value']
+    (question_id, order_index) [name: 'idx_question_option_question_order']
+  }
+
+  Note: 'Choices for SINGLE_CHOICE and MULTIPLE_CHOICE questions.'
+}
+
+Table skill_tree_rule {
+  id bigint [pk, increment, note: 'PK surrogate key']
+  survey_id bigint [not null, note: 'FK to survey.id ON DELETE CASCADE']
+  source_question_id bigint [not null, note: 'FK to question.id trigger source']
+  target_question_id bigint [not null, note: 'FK to question.id unlocked target']
+  trigger_value varchar(255) [not null, note: 'Answer value that reveals target']
+
+  indexes {
+    survey_id [name: 'idx_skill_tree_survey']
+    (source_question_id, trigger_value) [name: 'idx_skill_tree_source']
+  }
+
+  Note: 'Branching rule: source answer equals trigger_value reveals target question.'
+}
+
+Table survey_response {
+  id bigint [pk, increment, note: 'PK surrogate key']
+  survey_id bigint [not null, note: 'FK to survey.id ON DELETE CASCADE']
+  date_responded timestamp [not null, default: `now()`]
+
+  indexes {
+    (survey_id, date_responded) [name: 'idx_survey_response_survey_date']
+  }
+
+  Note: 'One respondent submission for a survey.'
+}
+
+Table response_answer {
+  id bigint [pk, increment, note: 'PK surrogate key']
+  survey_response_id bigint [not null, note: 'FK to survey_response.id ON DELETE CASCADE']
+  question_name varchar(255) [not null, note: 'Matches question.name slug']
+  answer_value text [note: 'Answer text pipe-delimited for multi-select']
+
+  indexes {
+    (question_name, answer_value) [name: 'idx_response_answer_name_value']
+  }
+
+  Note: 'Normalized answers. Email filter uses question_name email_address.'
+}
+
+Table certificate {
+  id bigint [pk, increment, note: 'PK surrogate key']
+  survey_response_id bigint [not null, note: 'FK to survey_response.id ON DELETE CASCADE']
+  file_name varchar(255) [not null, note: 'Original PDF filename']
+  file_path text [not null, note: 'Server filesystem path']
+  uploaded_at timestamp [not null, default: `now()`]
+
+  indexes {
+    survey_response_id [name: 'idx_certificate_response']
+  }
+
+  Note: 'PDF certificate metadata for FILE_UPLOAD answers.'
+}
+
+Table response_shortlist {
+  id bigint [pk, increment, note: 'PK surrogate key']
+  survey_id bigint [not null, note: 'FK to survey.id ON DELETE CASCADE']
+  survey_response_id bigint [not null, note: 'FK to survey_response.id ON DELETE CASCADE']
+  shortlisted_at timestamp [not null, default: `now()`]
+
+  indexes {
+    (survey_id, survey_response_id) [unique, name: 'uk_shortlist_survey_response']
+    (survey_id, shortlisted_at) [name: 'idx_shortlist_survey_date']
+  }
+
+  Note: 'Admin shortlist flags standout responses per survey.'
+}
+
+Ref: question.survey_id > survey.id [delete: cascade]
+
+Ref: question_option.question_id > question.id [delete: cascade]
+
+Ref: skill_tree_rule.survey_id > survey.id [delete: cascade]
+Ref: skill_tree_rule.source_question_id > question.id [delete: cascade]
+Ref: skill_tree_rule.target_question_id > question.id [delete: cascade]
+
+Ref: survey_response.survey_id > survey.id [delete: cascade]
+
+Ref: response_answer.survey_response_id > survey_response.id [delete: cascade]
+
+Ref: certificate.survey_response_id > survey_response.id [delete: cascade]
+
+Ref: response_shortlist.survey_id > survey.id [delete: cascade]
+Ref: response_shortlist.survey_response_id > survey_response.id [delete: cascade]

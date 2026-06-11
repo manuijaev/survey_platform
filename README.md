@@ -74,7 +74,7 @@ Monorepo implementation of the **Sky World Limited – Software Engineering Inte
 | Separate `simple-survey-mobile` repo | ⚠️ | Delivered as **installable PWA** in the web repo |
 | APK publish | ⚠️ | Install via **Add to Home Screen** (iOS/Android) or ship a TWA/APK wrapper separately |
 
-See [`frontend/README.md`](frontend/README.md#mobile-pwa) for install instructions.
+See [`mobile/APK_BUILD_GUIDE.md`](mobile/APK_BUILD_GUIDE.md) to build a real Android APK, and [`frontend/README.md`](frontend/README.md#mobile-pwa) for PWA install.
 
 ## Quick start
 

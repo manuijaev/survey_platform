@@ -1,6 +1,12 @@
-# SkyWorld Survey Platform Frontend
+# simple-survey-web
 
-Next.js 15 frontend for `simple-survey-web`, built around the "Deep Sea Logic" design system.
+Next.js 15 frontend for the SkyWorld Survey Platform (`simple-survey-web`), built around the "Deep Sea Logic" design system. Includes an installable **PWA** that satisfies the mobile participation requirements from the intern task brief.
+
+## Prerequisites
+
+- Node.js 20+
+- npm 10+
+- Running Spring Boot API on port `8080` (see [`../backend/README.md`](../backend/README.md))
 
 ## Stack
 
@@ -36,7 +42,30 @@ Next.js 15 frontend for `simple-survey-web`, built around the "Deep Sea Logic" d
 
 - The backend returns XML payloads that can be normalized into arrays or single records.
 - Admin and public experiences cannot share the same pathname in Next.js without route collisions, so the admin area is namespaced under `/admin`.
-- The backend may support page and size filters on the responses endpoint; the UI also keeps a client-side fallback for pagination controls.
+- The backend supports `page`, `pageSize`, and `email` filters on the responses endpoint.
+- **Mobile** is delivered as a Progressive Web App (installable, standalone display) rather than a separate native codebase, covering survey discovery, completion, and submission on phones.
+
+## Mobile (PWA)
+
+The brief requires survey participation on mobile. This repo fulfils that via a PWA:
+
+1. Open the deployed site (or `http://localhost:3000` with `NEXT_PUBLIC_ENABLE_PWA=true` in production builds).
+2. Use **Install app** / **Add to Home Screen** on Android or iOS Safari.
+3. Launch from the home screen — routes `/surveys`, `/surveys/[id]`, and `/surveys/[id]/respond` are mobile-optimised.
+
+For a standalone `simple-survey-mobile` repository or APK submission, you can wrap this PWA with [Bubblewrap/TWA](https://github.com/GoogleChromeLabs/bubblewrap) or document the PWA install path in your submission.
+
+## Deployment
+
+| Environment | URL |
+|---|---|
+| Production (Vercel) | https://survey-platform-lemon-one.vercel.app |
+
+Set on Vercel:
+
+- `API_URL` — Render (or local) backend base URL
+- `NEXT_PUBLIC_API_URL` — same value for client-side discovery
+- `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `ADMIN_SESSION_SECRET`
 
 ## Setup
 

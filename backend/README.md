@@ -44,11 +44,23 @@ mvn spring-boot:run
 | `DB_PASSWORD` | PostgreSQL password | `admin123` |
 | `FILE_UPLOAD_PATH` | Directory for uploaded PDFs | `media file` |
 
+## Deployment
+
+The API can be deployed to Render using the root [`Dockerfile`](../Dockerfile) and [`render.yaml`](../render.yaml) blueprint.
+
+| Setting | Value |
+|---|---|
+| Health check | `GET /api/surveys` |
+| Upload path | `/var/data/uploads` (attach a persistent disk on Render for certificate retention) |
+| Flyway migrations | `/database/migration` |
+
+Import [`SurveyAPI.postman_collection.json`](SurveyAPI.postman_collection.json) into Postman with `baseUrl` set to your deployed API.
+
 ## Repository Layout
 
-- `backend/` contains backend navigation notes.
-- `database/` contains database navigation notes, the ERD, and the Flyway migration SQL files.
-- `media file/` is the default upload directory used by the application when you run from `backend/`.
+- `backend/` — REST API source (`simple-survey-api`)
+- `../database/` — ERD, consolidated `sky_survey_db.sql`, Flyway migrations
+- `media file/` — default local upload directory when running from `backend/`
 
 ## Technologies Used
 
