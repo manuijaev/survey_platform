@@ -15,6 +15,7 @@ export const metadata: Metadata = {
   title: PWA_NAME,
   description: PWA_DESCRIPTION,
   metadataBase: new URL(appUrl),
+  manifest: "/manifest.webmanifest",
   applicationName: PWA_SHORT_NAME,
   appleWebApp: {
     capable: true,

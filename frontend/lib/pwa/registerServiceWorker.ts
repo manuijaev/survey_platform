@@ -10,7 +10,13 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
     return null;
   }
 
-  const registration = await navigator.serviceWorker.register(SW_URL, { scope: SW_SCOPE });
+  const registration = await navigator.serviceWorker.register(SW_URL, {
+    scope: SW_SCOPE,
+    updateViaCache: "none"
+  });
+
+  await registration.update().catch(() => undefined);
+
   return {
     registration,
     waitingWorker: registration.waiting

@@ -76,5 +76,5 @@ export async function detectInstalledRelatedApp() {
 }
 
 export function shouldSuppressInstallPrompt() {
-  return isStandaloneDisplayMode() || isPwaMarkedInstalled() || isInstallDismissed() || isInstallSeenThisSession();
+  return isStandaloneDisplayMode() || isPwaMarkedInstalled() || isInstallDismissed();
 }

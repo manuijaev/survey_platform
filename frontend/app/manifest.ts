@@ -10,12 +10,14 @@ import {
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
+    id: "/",
     name: PWA_NAME,
     short_name: PWA_SHORT_NAME,
     description: PWA_DESCRIPTION,
     start_url: PWA_START_URL,
     scope: "/",
     display: "standalone",
+    prefer_related_applications: false,
     orientation: "portrait-primary",
     background_color: PWA_BACKGROUND_COLOR,
     theme_color: PWA_THEME_COLOR,

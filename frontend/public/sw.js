@@ -1,7 +1,14 @@
-const CACHE_VERSION = "skyworld-v1";
+const CACHE_VERSION = "skyworld-v2";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 
-const PRECACHE_URLS = ["/", "/surveys", "/offline", "/icons/icon-192.png", "/icons/icon-512.png"];
+const PRECACHE_URLS = [
+  "/",
+  "/surveys",
+  "/offline",
+  "/manifest.webmanifest",
+  "/icons/icon-192.png",
+  "/icons/icon-512.png"
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
