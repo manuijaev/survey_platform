@@ -33,6 +33,8 @@ public class Certificate {
     @ToString.Exclude
     private SurveyResponse surveyResponse;
 
+    // Include fileName in equals/hashCode so multiple unsaved certificates (id=null) coexist in Set.
+    @EqualsAndHashCode.Include
     @Column(nullable = false)
     private String fileName;
 

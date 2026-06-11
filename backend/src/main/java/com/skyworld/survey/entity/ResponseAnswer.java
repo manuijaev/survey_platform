@@ -30,6 +30,9 @@ public class ResponseAnswer {
     @ToString.Exclude
     private SurveyResponse surveyResponse;
 
+    // Include questionName in equals/hashCode so multiple unsaved answers (id=null) are not
+    // collapsed into one entry when stored in the parent Set<ResponseAnswer>.
+    @EqualsAndHashCode.Include
     @Column(name = "question_name", nullable = false)
     private String questionName;
 
