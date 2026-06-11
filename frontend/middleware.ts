@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session";
+import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "./lib/admin-session-edge";
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
