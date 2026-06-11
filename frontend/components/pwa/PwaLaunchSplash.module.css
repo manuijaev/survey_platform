@@ -1,92 +1,134 @@
 .root {
-  background:
-    radial-gradient(circle at 50% 42%, rgba(13, 148, 136, 0.28), transparent 48%),
-    radial-gradient(circle at 20% 78%, rgba(16, 185, 129, 0.14), transparent 36%),
-    radial-gradient(circle at 80% 68%, rgba(13, 148, 136, 0.1), transparent 34%),
-    linear-gradient(180deg, #040807 0%, #060a09 45%, #030605 100%);
+  perspective: 1200px;
+  background: #030605;
+}
+
+.auroraLayer {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(72px);
+  will-change: transform, opacity;
+}
+
+.auroraTeal {
+  background: radial-gradient(circle, rgba(13, 148, 136, 0.55) 0%, rgba(13, 148, 136, 0.08) 55%, transparent 72%);
+}
+
+.auroraMint {
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.42) 0%, rgba(16, 185, 129, 0.06) 58%, transparent 74%);
+}
+
+.auroraDeep {
+  background: radial-gradient(circle, rgba(6, 95, 88, 0.38) 0%, transparent 68%);
+}
+
+.vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 44%, transparent 18%, rgba(3, 6, 5, 0.72) 72%, rgba(2, 4, 3, 0.95) 100%);
+  pointer-events: none;
 }
 
 .filmGrain {
-  opacity: 0.14;
+  opacity: 0.1;
+  mix-blend-mode: soft-light;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
 }
 
-.logoRing {
+.burstCore {
   position: absolute;
-  inset: -20%;
-  border-radius: 28%;
-  background: conic-gradient(
-    from 0deg,
-    rgba(13, 148, 136, 0.08),
-    rgba(16, 185, 129, 0.9),
-    rgba(13, 148, 136, 0.25),
-    rgba(16, 185, 129, 0.9),
-    rgba(13, 148, 136, 0.08)
+  left: 50%;
+  top: 44%;
+  width: 24px;
+  height: 24px;
+  margin-left: -12px;
+  margin-top: -12px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(220, 252, 249, 0.95) 0%, rgba(16, 185, 129, 0.65) 35%, transparent 72%);
+  filter: blur(2px);
+}
+
+.lightRay {
+  position: absolute;
+  left: 50%;
+  top: 44%;
+  width: 2px;
+  height: min(42vh, 220px);
+  margin-left: -1px;
+  transform-origin: 50% 100%;
+  background: linear-gradient(
+    180deg,
+    rgba(16, 185, 129, 0.72) 0%,
+    rgba(13, 148, 136, 0.28) 42%,
+    transparent 100%
   );
-  animation: splashRingSpin 3.2s linear infinite;
+  filter: blur(0.4px);
 }
 
-.logoRingInner {
+.halo {
   position: absolute;
-  inset: 3px;
-  border-radius: 26%;
-  background: #08100e;
+  inset: -38%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(16, 185, 129, 0.38) 0%,
+    rgba(13, 148, 136, 0.16) 38%,
+    transparent 68%
+  );
+  filter: blur(18px);
 }
 
-.logoShine::after {
-  content: "";
+.logoFrame {
+  position: relative;
+  isolation: isolate;
+  border-radius: 24%;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 1px rgba(13, 148, 136, 0.35),
+    0 0 48px rgba(13, 148, 136, 0.45),
+    0 24px 64px rgba(0, 0, 0, 0.55);
+}
+
+.logoSweep {
   position: absolute;
-  inset: -50% -80%;
+  inset: -40% -70%;
   background: linear-gradient(
     115deg,
-    transparent 40%,
-    rgba(255, 255, 255, 0.45) 50%,
-    transparent 60%
+    transparent 38%,
+    rgba(255, 255, 255, 0.5) 50%,
+    transparent 62%
   );
-  animation: splashShine 2.2s ease-in-out 0.35s 1;
+  pointer-events: none;
 }
 
 .particle {
   position: absolute;
   border-radius: 999px;
-  background: rgba(16, 185, 129, 0.9);
-  box-shadow: 0 0 14px rgba(13, 148, 136, 0.65);
+  background: rgba(16, 185, 129, 0.95);
+  box-shadow: 0 0 16px rgba(13, 148, 136, 0.75);
 }
 
-.streak {
+.spark {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 140%;
-  height: 2px;
-  transform: translate(-50%, -50%) rotate(-24deg);
-  background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.7), transparent);
-  filter: blur(0.5px);
+  border-radius: 999px;
+  background: rgba(167, 243, 232, 0.95);
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.9);
 }
 
-@keyframes splashRingSpin {
-  to {
-    transform: rotate(360deg);
-  }
+.titleChar {
+  display: inline-block;
+  transform-origin: 50% 100%;
 }
 
-@keyframes splashShine {
-  0% {
-    transform: translateX(-120%) rotate(12deg);
-    opacity: 0;
-  }
-  20% {
-    opacity: 1;
-  }
-  100% {
-    transform: translateX(120%) rotate(12deg);
-    opacity: 0;
-  }
+.tagline {
+  letter-spacing: 0.32em;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .logoRing,
-  .logoShine::after {
+  .auroraLayer,
+  .halo {
     animation: none;
   }
 }
