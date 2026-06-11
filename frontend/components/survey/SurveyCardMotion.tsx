@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
+import { usePwaLaunchGate } from "@/lib/pwa/PwaLaunchGateContext";
 import type { ReactNode } from "react";
 import styles from "./SurveyCard.module.css";
 
@@ -18,8 +19,9 @@ type SurveyCardMotionProps = {
 
 export function SurveyCardMotion({ children, index = 0 }: SurveyCardMotionProps) {
   const reduceMotion = useReducedMotion();
+  const { deferMotion } = usePwaLaunchGate();
 
-  if (reduceMotion) {
+  if (reduceMotion || deferMotion) {
     return <div className={styles.cardWrap}>{children}</div>;
   }
 

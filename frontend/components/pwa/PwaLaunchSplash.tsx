@@ -4,10 +4,9 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { PWA_SHORT_NAME, PWA_SPLASH_DURATION_MS } from "@/lib/pwa/config";
+import { PWA_SHORT_NAME, PWA_SPLASH_EXIT_MS, PWA_SPLASH_HOLD_MS } from "@/lib/pwa/config";
 import styles from "./PwaLaunchSplash.module.css";
 
-const easeOut = [0.16, 1, 0.3, 1] as const;
 const easeSmooth = [0.22, 1, 0.36, 1] as const;
 const logoSpring = { type: "spring" as const, stiffness: 360, damping: 26, mass: 0.88 };
 const softSpring = { type: "spring" as const, stiffness: 260, damping: 22, mass: 0.95 };
@@ -92,37 +91,32 @@ const titleChar = {
 };
 
 type PwaLaunchSplashProps = {
-  onHandoff: () => void;
   onComplete: () => void;
 };
 
-export function PwaLaunchSplash({ onHandoff, onComplete }: PwaLaunchSplashProps) {
+export function PwaLaunchSplash({ onComplete }: PwaLaunchSplashProps) {
   const reduceMotion = useReducedMotion();
   const [mounted] = useState(() => typeof document !== "undefined");
   const [visible, setVisible] = useState(true);
-  const handoffRef = useRef(onHandoff);
+  const [exiting, setExiting] = useState(false);
   const completeRef = useRef(onComplete);
   const particles = useMemo(() => buildParticles(40), []);
   const sparks = useMemo(() => buildSparks(8), []);
   const titleChars = useMemo(() => PWA_SHORT_NAME.split(""), []);
 
   useEffect(() => {
-    handoffRef.current = onHandoff;
     completeRef.current = onComplete;
-  }, [onComplete, onHandoff]);
+  }, [onComplete]);
 
   useEffect(() => {
-    const totalMs = reduceMotion ? 520 : PWA_SPLASH_DURATION_MS;
-    const fadeOutMs = reduceMotion ? 180 : 620;
-    const handoffMs = totalMs - fadeOutMs;
-
-    const handoffTimer = window.setTimeout(() => {
-      handoffRef.current();
+    const holdMs = reduceMotion ? 400 : PWA_SPLASH_HOLD_MS;
+    const exitTimer = window.setTimeout(() => {
+      setExiting(true);
       setVisible(false);
-    }, handoffMs);
+    }, holdMs);
 
     return () => {
-      window.clearTimeout(handoffTimer);
+      window.clearTimeout(exitTimer);
     };
   }, [reduceMotion]);
 
@@ -139,55 +133,53 @@ export function PwaLaunchSplash({ onHandoff, onComplete }: PwaLaunchSplashProps)
           initial={{ opacity: 1 }}
           exit={{
             opacity: 0,
-            scale: 1.02,
-            filter: "blur(10px)",
-            transition: { duration: reduceMotion ? 0.2 : 0.68, ease: easeSmooth }
+            transition: { duration: reduceMotion ? 0.22 : PWA_SPLASH_EXIT_MS / 1000, ease: easeSmooth }
           }}
         >
           <motion.div
             className={`${styles.auroraLayer} ${styles.auroraTeal}`}
             style={{ width: "min(92vw, 520px)", height: "min(92vw, 520px)", left: "8%", top: "18%" }}
             animate={
-              reduceMotion
-                ? { opacity: 0.48 }
+              exiting || reduceMotion
+                ? { opacity: 0.4 }
                 : { x: [0, 28, -14, 0], y: [0, -22, 10, 0], scale: [1, 1.08, 0.98, 1], opacity: [0.4, 0.58, 0.46, 0.4] }
             }
-            transition={{ duration: 5.6, repeat: Infinity, ease: "easeInOut" }}
+            transition={{ duration: exiting ? 0.35 : 5.6, repeat: exiting ? 0 : Infinity, ease: "easeInOut" }}
           />
           <motion.div
             className={`${styles.auroraLayer} ${styles.auroraMint}`}
             style={{ width: "min(78vw, 440px)", height: "min(78vw, 440px)", right: "4%", bottom: "12%" }}
             animate={
-              reduceMotion
-                ? { opacity: 0.38 }
+              exiting || reduceMotion
+                ? { opacity: 0.32 }
                 : { x: [0, -34, 18, 0], y: [0, 18, -14, 0], scale: [1, 0.94, 1.06, 1], opacity: [0.32, 0.5, 0.38, 0.32] }
             }
-            transition={{ duration: 6.2, repeat: Infinity, ease: "easeInOut", delay: 0.35 }}
+            transition={{ duration: exiting ? 0.35 : 6.2, repeat: exiting ? 0 : Infinity, ease: "easeInOut", delay: 0.35 }}
           />
           <motion.div
             className={`${styles.auroraLayer} ${styles.auroraDeep}`}
             style={{ width: "min(64vw, 360px)", height: "min(64vw, 360px)", left: "34%", top: "52%" }}
             animate={
-              reduceMotion
-                ? { opacity: 0.32 }
+              exiting || reduceMotion
+                ? { opacity: 0.28 }
                 : { x: [0, 14, -20, 0], y: [0, -12, 16, 0], opacity: [0.26, 0.42, 0.3, 0.26] }
             }
-            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.7 }}
+            transition={{ duration: exiting ? 0.35 : 5, repeat: exiting ? 0 : Infinity, ease: "easeInOut", delay: 0.7 }}
           />
 
           <div className={styles.vignette} aria-hidden="true" />
           <div className={`pointer-events-none absolute inset-0 ${styles.filmGrain}`} aria-hidden="true" />
 
-          {!reduceMotion ? (
+          {!reduceMotion && !exiting ? (
             <motion.div
               className={styles.burstCore}
               initial={{ scale: 0, opacity: 0 }}
               animate={{ scale: [0, 2.4, 4.8], opacity: [0, 0.75, 0] }}
-              transition={{ duration: 0.95, delay: TIMELINE.burst, ease: easeOut }}
+              transition={{ duration: 0.95, delay: TIMELINE.burst, ease: easeSmooth }}
             />
           ) : null}
 
-          {!reduceMotion
+          {!reduceMotion && !exiting
             ? LIGHT_RAYS.map((ray) => (
                 <motion.div
                   key={ray.id}
@@ -198,68 +190,49 @@ export function PwaLaunchSplash({ onHandoff, onComplete }: PwaLaunchSplashProps)
                   transition={{
                     duration: 1.2,
                     delay: TIMELINE.rays + ray.delay,
-                    ease: easeOut
+                    ease: easeSmooth
                   }}
                 />
               ))
             : null}
 
-          {particles.map((particle) => (
-            <motion.span
-              key={particle.id}
-              className={styles.particle}
-              style={{
-                left: `${particle.left}%`,
-                top: `${particle.top}%`,
-                width: particle.size,
-                height: particle.size
-              }}
-              initial={{ opacity: 0, scale: 0.2 }}
-              animate={{
-                opacity: reduceMotion ? 0 : [0, particle.opacity, 0],
-                scale: reduceMotion ? 0 : [0.2, 1, 0.2],
-                x: reduceMotion ? 0 : [0, particle.driftX],
-                y: reduceMotion ? 0 : [0, particle.driftY]
-              }}
-              transition={{
-                duration: particle.duration,
-                delay: TIMELINE.logo + particle.delay,
-                repeat: reduceMotion ? 0 : Infinity,
-                repeatDelay: 0.32,
-                ease: "easeOut"
-              }}
-            />
-          ))}
+          {!exiting
+            ? particles.map((particle) => (
+                <motion.span
+                  key={particle.id}
+                  className={styles.particle}
+                  style={{
+                    left: `${particle.left}%`,
+                    top: `${particle.top}%`,
+                    width: particle.size,
+                    height: particle.size
+                  }}
+                  initial={{ opacity: 0, scale: 0.2 }}
+                  animate={{
+                    opacity: reduceMotion ? 0 : [0, particle.opacity, 0],
+                    scale: reduceMotion ? 0 : [0.2, 1, 0.2],
+                    x: reduceMotion ? 0 : [0, particle.driftX],
+                    y: reduceMotion ? 0 : [0, particle.driftY]
+                  }}
+                  transition={{
+                    duration: particle.duration,
+                    delay: TIMELINE.logo + particle.delay,
+                    repeat: reduceMotion ? 0 : Infinity,
+                    repeatDelay: 0.32,
+                    ease: "easeOut"
+                  }}
+                />
+              ))
+            : null}
 
           <div className="relative flex flex-col items-center px-6 text-center" style={{ perspective: 900 }}>
             <motion.div
               className="relative"
               style={{ width: 136, height: 136 }}
-              initial={
-                reduceMotion
-                  ? { opacity: 0 }
-                  : { opacity: 0, scale: 0.2, rotateY: -72, rotateX: 14, z: -100, filter: "blur(16px)" }
-              }
-              animate={
-                reduceMotion
-                  ? { opacity: 1, scale: 1, rotateY: 0, rotateX: 0, z: 0, filter: "blur(0px)" }
-                  : { opacity: 1, scale: 1, rotateY: 0, rotateX: 0, z: 0, filter: "blur(0px)" }
-              }
-              transition={
-                reduceMotion
-                  ? { duration: 0.28, delay: 0.08 }
-                  : {
-                      delay: TIMELINE.logo,
-                      opacity: { duration: 0.4, ease: easeSmooth },
-                      scale: logoSpring,
-                      rotateY: logoSpring,
-                      rotateX: logoSpring,
-                      z: logoSpring,
-                      filter: { duration: 0.6, ease: easeSmooth }
-                    }
-              }
+              animate={exiting ? { opacity: 0.92, scale: 0.98 } : { opacity: 1, scale: 1 }}
+              transition={{ duration: 0.45, ease: easeSmooth }}
             >
-              {!reduceMotion ? (
+              {!reduceMotion && !exiting ? (
                 <motion.div
                   className={styles.halo}
                   initial={{ scale: 0.5, opacity: 0 }}
@@ -276,7 +249,7 @@ export function PwaLaunchSplash({ onHandoff, onComplete }: PwaLaunchSplashProps)
                 />
               ) : null}
 
-              {!reduceMotion
+              {!reduceMotion && !exiting
                 ? sparks.map((spark) => {
                     const rad = (spark.angle * Math.PI) / 180;
                     const x = Math.cos(rad) * spark.radius;
@@ -310,16 +283,41 @@ export function PwaLaunchSplash({ onHandoff, onComplete }: PwaLaunchSplashProps)
 
               <motion.div
                 className={styles.logoCluster}
-                animate={reduceMotion ? undefined : { y: [0, -4, 0] }}
+                initial={
+                  reduceMotion
+                    ? { opacity: 0 }
+                    : { opacity: 0, scale: 0.2, rotateY: -72, rotateX: 14, z: -100, filter: "blur(16px)" }
+                }
+                animate={
+                  reduceMotion
+                    ? { opacity: 1, scale: 1, rotateY: 0, rotateX: 0, z: 0, filter: "blur(0px)" }
+                    : exiting
+                      ? { opacity: 1, scale: 1, rotateY: 0, rotateX: 0, z: 0, filter: "blur(0px)", y: 0 }
+                      : {
+                          opacity: 1,
+                          scale: 1,
+                          rotateY: 0,
+                          rotateX: 0,
+                          z: 0,
+                          filter: "blur(0px)",
+                          y: [0, -4, 0]
+                        }
+                }
                 transition={
                   reduceMotion
-                    ? undefined
-                    : {
-                        duration: 3.2,
-                        repeat: Infinity,
-                        ease: "easeInOut",
-                        delay: TIMELINE.float
-                      }
+                    ? { duration: 0.28, delay: 0.08 }
+                    : exiting
+                      ? { duration: 0.45, ease: easeSmooth }
+                      : {
+                          delay: TIMELINE.logo,
+                          opacity: { duration: 0.4, ease: easeSmooth },
+                          scale: logoSpring,
+                          rotateY: logoSpring,
+                          rotateX: logoSpring,
+                          z: logoSpring,
+                          filter: { duration: 0.6, ease: easeSmooth },
+                          y: { duration: 3.2, repeat: Infinity, ease: "easeInOut", delay: TIMELINE.float }
+                        }
                 }
               >
                 <div className="relative h-full w-full">
@@ -331,7 +329,7 @@ export function PwaLaunchSplash({ onHandoff, onComplete }: PwaLaunchSplashProps)
                     className={`${styles.logoImage} h-full w-full object-cover`}
                     priority
                   />
-                  {!reduceMotion ? (
+                  {!reduceMotion && !exiting ? (
                     <motion.div
                       className={styles.logoSweep}
                       initial={{ opacity: 0 }}
@@ -354,43 +352,50 @@ export function PwaLaunchSplash({ onHandoff, onComplete }: PwaLaunchSplashProps)
               </motion.div>
             </motion.div>
 
-            <motion.div className="mt-9 overflow-hidden" variants={titleContainer} initial="hidden" animate="show">
-              <p className="font-display text-4xl text-[color:var(--text-primary)] sm:text-5xl" aria-label={PWA_SHORT_NAME}>
-                {titleChars.map((char, index) => (
-                  <motion.span
-                    key={`${char}-${index}`}
-                    className={styles.titleChar}
-                    variants={reduceMotion ? undefined : titleChar}
-                    initial={reduceMotion ? { opacity: 0 } : undefined}
-                    animate={reduceMotion ? { opacity: 1 } : undefined}
-                    transition={reduceMotion ? { delay: 0.12, duration: 0.25 } : undefined}
+            {!exiting ? (
+              <>
+                <motion.div className="mt-9 overflow-hidden" variants={titleContainer} initial="hidden" animate="show">
+                  <p
+                    className="font-display text-4xl text-[color:var(--text-primary)] sm:text-5xl"
+                    aria-label={PWA_SHORT_NAME}
                   >
-                    {char}
-                  </motion.span>
-                ))}
-              </p>
-            </motion.div>
+                    {titleChars.map((char, index) => (
+                      <motion.span
+                        key={`${char}-${index}`}
+                        className={styles.titleChar}
+                        variants={reduceMotion ? undefined : titleChar}
+                        initial={reduceMotion ? { opacity: 0 } : undefined}
+                        animate={reduceMotion ? { opacity: 1 } : undefined}
+                        transition={reduceMotion ? { delay: 0.12, duration: 0.25 } : undefined}
+                      >
+                        {char}
+                      </motion.span>
+                    ))}
+                  </p>
+                </motion.div>
 
-            <motion.p
-              className={`${styles.tagline} mt-3 text-sm uppercase text-[color:var(--text-muted)]`}
-              initial={{ opacity: 0, y: 12, letterSpacing: "0.44em", filter: "blur(5px)" }}
-              animate={{ opacity: 1, y: 0, letterSpacing: "0.32em", filter: "blur(0px)" }}
-              transition={{
-                delay: reduceMotion ? 0.18 : TIMELINE.tagline,
-                duration: reduceMotion ? 0.28 : 0.7,
-                ease: easeSmooth
-              }}
-            >
-              Survey Platform
-            </motion.p>
+                <motion.p
+                  className={`${styles.tagline} mt-3 text-sm uppercase text-[color:var(--text-muted)]`}
+                  initial={{ opacity: 0, y: 12, letterSpacing: "0.44em", filter: "blur(5px)" }}
+                  animate={{ opacity: 1, y: 0, letterSpacing: "0.32em", filter: "blur(0px)" }}
+                  transition={{
+                    delay: reduceMotion ? 0.18 : TIMELINE.tagline,
+                    duration: reduceMotion ? 0.28 : 0.7,
+                    ease: easeSmooth
+                  }}
+                >
+                  Survey Platform
+                </motion.p>
 
-            {!reduceMotion ? (
-              <motion.div
-                className="mt-8 h-px w-24 origin-center bg-gradient-to-r from-transparent via-[rgba(16,185,129,0.7)] to-transparent"
-                initial={{ scaleX: 0, opacity: 0 }}
-                animate={{ scaleX: 1, opacity: [0, 0.85, 0.5] }}
-                transition={{ delay: TIMELINE.accent, duration: 0.8, ease: easeSmooth }}
-              />
+                {!reduceMotion ? (
+                  <motion.div
+                    className="mt-8 h-px w-24 origin-center bg-gradient-to-r from-transparent via-[rgba(16,185,129,0.7)] to-transparent"
+                    initial={{ scaleX: 0, opacity: 0 }}
+                    animate={{ scaleX: 1, opacity: [0, 0.85, 0.5] }}
+                    transition={{ delay: TIMELINE.accent, duration: 0.8, ease: easeSmooth }}
+                  />
+                ) : null}
+              </>
             ) : null}
           </div>
         </motion.div>

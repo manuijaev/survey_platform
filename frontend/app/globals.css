@@ -381,33 +381,38 @@ html.pwa-splash-active body {
   background: #030605;
 }
 
-html.pwa-splash-active #pwa-app-root {
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
+html.pwa-splash-active #pwa-app-root,
+#pwa-app-root.pwa-app--hidden {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
 }
 
-html.pwa-app-reveal #pwa-app-root {
-  animation: pwaAppReveal 0.92s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+#pwa-app-root.pwa-app--reveal {
+  visibility: visible;
+  pointer-events: auto;
+  opacity: 0;
+  animation: pwaAppReveal 0.72s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+#pwa-app-root.pwa-app--ready {
+  opacity: 1;
+  visibility: visible;
 }
 
 @keyframes pwaAppReveal {
   from {
     opacity: 0;
-    transform: scale(1.018);
-    filter: blur(10px);
   }
 
   to {
     opacity: 1;
-    transform: scale(1);
-    filter: blur(0);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html.pwa-app-reveal #pwa-app-root {
-    animation: pwaAppRevealReduced 0.32s ease forwards;
+  #pwa-app-root.pwa-app--reveal {
+    animation: pwaAppRevealReduced 0.28s ease forwards;
   }
 
   @keyframes pwaAppRevealReduced {

@@ -1,9 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { InstallPrompt } from "@/components/pwa/InstallPrompt";
 import { OpenInAppPrompt } from "@/components/pwa/OpenInAppPrompt";
 import { PwaLaunchSplash } from "@/components/pwa/PwaLaunchSplash";
+import { PWA_APP_REVEAL_MS } from "@/lib/pwa/config";
+import {
+  PwaLaunchGateProvider,
+  type PwaLaunchPhase
+} from "@/lib/pwa/PwaLaunchGateContext";
 import {
   isStandaloneDisplayMode,
   markPwaInstalled,
@@ -12,28 +17,31 @@ import {
 } from "@/lib/pwa/pwaStorage";
 import { UpdateBanner } from "@/components/pwa/UpdateBanner";
 import { activateWaitingWorker, registerServiceWorker } from "@/lib/pwa/registerServiceWorker";
+import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 
 type PwaProviderProps = {
   children: ReactNode;
 };
 
-type AppRevealPhase = "hidden" | "revealing" | "visible";
-
-const APP_REVEAL_MS = 920;
+function isSplashGateActive() {
+  if (typeof document === "undefined") return false;
+  return document.documentElement.classList.contains("pwa-splash-active");
+}
 
 export function PwaProvider({ children }: PwaProviderProps) {
   const [updateReady, setUpdateReady] = useState(false);
   const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
+  const [phase, setPhase] = useState<PwaLaunchPhase>("boot");
   const [showLaunchSplash, setShowLaunchSplash] = useState(false);
-  const [appRevealPhase, setAppRevealPhase] = useState<AppRevealPhase>("visible");
-  const [splashBootstrapped, setSplashBootstrapped] = useState(false);
 
   useLayoutEffect(() => {
     if (!isStandaloneDisplayMode()) {
       document.documentElement.classList.remove("pwa-splash-active", "pwa-app-reveal");
-      setAppRevealPhase("visible");
-      setSplashBootstrapped(true);
+      document.body.style.overflow = "";
+      document.body.style.background = "";
+      setPhase("idle");
+      setShowLaunchSplash(false);
       return;
     }
 
@@ -41,45 +49,43 @@ export function PwaProvider({ children }: PwaProviderProps) {
     document.documentElement.classList.add("pwa-standalone");
 
     if (shouldShowPwaLaunchSplash()) {
-      setShowLaunchSplash(true);
-      setAppRevealPhase("hidden");
       document.documentElement.classList.add("pwa-splash-active");
-    } else {
-      document.documentElement.classList.remove("pwa-splash-active", "pwa-app-reveal");
-      setAppRevealPhase("visible");
-    }
-
-    setSplashBootstrapped(true);
-  }, []);
-
-  useEffect(() => {
-    if (!showLaunchSplash) {
-      document.body.style.overflow = "";
+      document.body.style.overflow = "hidden";
+      document.body.style.background = "#030605";
+      setPhase("splash");
+      setShowLaunchSplash(true);
       return;
     }
 
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = previous;
-    };
-  }, [showLaunchSplash]);
-
-  const beginAppReveal = useCallback(() => {
-    markPwaSplashSeenThisSession();
-    document.documentElement.classList.remove("pwa-splash-active");
-    document.documentElement.classList.add("pwa-app-reveal");
-    setAppRevealPhase("revealing");
-
-    window.setTimeout(() => {
-      document.documentElement.classList.remove("pwa-app-reveal");
-      setAppRevealPhase("visible");
-    }, APP_REVEAL_MS);
+    document.documentElement.classList.remove("pwa-splash-active", "pwa-app-reveal");
+    document.body.style.overflow = "";
+    document.body.style.background = "";
+    setPhase("idle");
+    setShowLaunchSplash(false);
   }, []);
 
   const completeLaunchSplash = useCallback(() => {
+    markPwaSplashSeenThisSession();
     setShowLaunchSplash(false);
+    document.documentElement.classList.remove("pwa-splash-active");
+    document.documentElement.classList.add("pwa-app-reveal");
+    document.body.style.overflow = "";
+    setPhase("reveal");
+
+    window.setTimeout(() => {
+      document.documentElement.classList.remove("pwa-app-reveal");
+      document.body.style.background = "";
+      setPhase("ready");
+    }, PWA_APP_REVEAL_MS);
   }, []);
+
+  useEffect(() => {
+    if (phase !== "splash" || !showLaunchSplash) {
+      return;
+    }
+
+    document.body.style.overflow = "hidden";
+  }, [phase, showLaunchSplash]);
 
   useEffect(() => {
     const shouldRegister =
@@ -140,23 +146,36 @@ export function PwaProvider({ children }: PwaProviderProps) {
     window.location.reload();
   };
 
-  const chromeReady = splashBootstrapped && !showLaunchSplash;
+  const deferMotion = phase === "boot" || phase === "splash" || phase === "reveal";
+  const appHidden = phase === "boot" ? isSplashGateActive() : phase === "splash";
+  const chromeReady = phase === "idle" || phase === "ready";
+
+  const gateValue = useMemo(
+    () => ({
+      phase,
+      deferMotion
+    }),
+    [deferMotion, phase]
+  );
 
   return (
-    <>
+    <PwaLaunchGateProvider value={gateValue}>
       <div
         id="pwa-app-root"
-        aria-hidden={appRevealPhase === "hidden"}
-        style={appRevealPhase === "hidden" ? { opacity: 0, visibility: "hidden" } : undefined}
+        className={cn(
+          appHidden && "pwa-app--hidden",
+          phase === "reveal" && "pwa-app--reveal",
+          phase === "ready" && "pwa-app--ready",
+          phase === "idle" && "pwa-app--ready"
+        )}
+        aria-hidden={appHidden}
       >
         {children}
       </div>
-      {showLaunchSplash ? (
-        <PwaLaunchSplash onHandoff={beginAppReveal} onComplete={completeLaunchSplash} />
-      ) : null}
+      {showLaunchSplash ? <PwaLaunchSplash onComplete={completeLaunchSplash} /> : null}
       {chromeReady ? <OpenInAppPrompt /> : null}
       {chromeReady ? <InstallPrompt /> : null}
-      {updateReady ? <UpdateBanner onReload={reloadForUpdate} /> : null}
-    </>
+      {updateReady && chromeReady ? <UpdateBanner onReload={reloadForUpdate} /> : null}
+    </PwaLaunchGateProvider>
   );
 }
