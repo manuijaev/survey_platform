@@ -382,7 +382,7 @@ export default function SurveyRespondPage() {
           title={initError ? "Cannot reach server" : surveyQuery.data ? "Survey flow unavailable" : "Survey not found"}
           description={
             initError
-              ? "The backend server is not responding. Make sure it is running on port 8080, then retry."
+              ? "The survey API is not responding. Check that the backend is deployed and API_URL is set on Vercel, then retry."
               : surveyQuery.data
                 ? "The first question could not be loaded from the backend."
                 : "The requested survey could not be found."

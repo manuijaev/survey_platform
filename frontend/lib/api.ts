@@ -19,8 +19,9 @@ import type { ShortlistStatus, Survey, SurveyPayload, SurveyResponseSummary } fr
 import type { Question, QuestionOption, QuestionPayload, QuestionType } from "@/types/question";
 import type { NextQuestionResponse, SurveySubmissionPayload } from "@/types/response";
 import type { SurveyRulePayload, SurveyRule } from "@/types/rule";
+import { getApiBaseUrl } from "./api/baseUrl";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+const BASE_URL = getApiBaseUrl();
 
 const blobApi: AxiosInstance = axios.create({
   baseURL: BASE_URL,

@@ -12,6 +12,7 @@ import { useSurveys } from "@/lib/hooks";
 export default function PublicSurveysPage() {
   const surveysQuery = useSurveys();
   const surveys = surveysQuery.data ?? [];
+  const loadFailed = surveysQuery.isError && !surveysQuery.isLoading;
 
   const hasSurveys = surveys.length > 0;
   const cards = useMemo(() => Array.from({ length: 6 }), []);
@@ -39,6 +40,13 @@ export default function PublicSurveysPage() {
               <SurveyCardSkeleton key={index} />
             ))}
           </div>
+        ) : loadFailed ? (
+          <EmptyState
+            title="Could not load surveys"
+            description="The app could not reach the survey API. If you just deployed, confirm API_URL is set on Vercel to your Render backend (https://...)."
+            actionLabel="Try again"
+            onAction={() => surveysQuery.refetch()}
+          />
         ) : hasSurveys ? (
           <div className={cardStyles.cardGrid}>
             {surveys.map((survey, index) => (

@@ -30,10 +30,14 @@ export default function SurveyDetailPage() {
     return (
       <div className="mx-auto flex min-h-screen max-w-4xl items-center px-4 py-8 sm:px-6 lg:px-8">
         <EmptyState
-          title="Survey not found"
-          description="The survey you requested does not exist or is no longer available."
-          actionLabel="Back to surveys"
-          onAction={() => router.push("/surveys")}
+          title={surveyQuery.isError ? "Could not load survey" : "Survey not found"}
+          description={
+            surveyQuery.isError
+              ? "The survey API is unreachable. Check that your backend is running and API_URL is configured on Vercel."
+              : "The survey you requested does not exist or is no longer available."
+          }
+          actionLabel={surveyQuery.isError ? "Try again" : "Back to surveys"}
+          onAction={() => (surveyQuery.isError ? surveyQuery.refetch() : router.push("/surveys"))}
         />
       </div>
     );

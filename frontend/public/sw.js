@@ -1,9 +1,7 @@
-const CACHE_VERSION = "skyworld-v2";
+const CACHE_VERSION = "skyworld-v3";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 
 const PRECACHE_URLS = [
-  "/",
-  "/surveys",
   "/offline",
   "/manifest.webmanifest",
   "/icons/icon-192.png",
@@ -51,62 +49,27 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // Never cache App Router navigations or API routes — stale HTML/RSC breaks hydration.
+  if (request.mode === "navigate") {
+    return;
+  }
+
   if (url.pathname.startsWith("/api/")) {
     return;
   }
 
-  if (url.pathname.startsWith("/_next/static/")) {
-    event.respondWith(cacheFirst(request));
+  if (url.pathname.startsWith("/_next/")) {
     return;
   }
 
-  if (request.mode === "navigate") {
-    event.respondWith(networkFirstNavigation(request));
-    return;
+  if (
+    url.pathname.startsWith("/icons/") ||
+    url.pathname === "/manifest.webmanifest" ||
+    url.pathname === "/offline"
+  ) {
+    event.respondWith(staleWhileRevalidate(request));
   }
-
-  event.respondWith(staleWhileRevalidate(request));
 });
-
-async function cacheFirst(request) {
-  const cached = await caches.match(request);
-  if (cached) {
-    return cached;
-  }
-
-  const response = await fetch(request);
-  if (response.ok) {
-    const cache = await caches.open(STATIC_CACHE);
-    await cache.put(request, response.clone());
-  }
-  return response;
-}
-
-async function networkFirstNavigation(request) {
-  try {
-    const response = await fetch(request);
-    if (response.ok) {
-      const cache = await caches.open(STATIC_CACHE);
-      await cache.put(request, response.clone());
-    }
-    return response;
-  } catch {
-    const cached = await caches.match(request);
-    if (cached) {
-      return cached;
-    }
-
-    const offline = await caches.match("/offline");
-    if (offline) {
-      return offline;
-    }
-
-    return new Response("Offline", {
-      status: 503,
-      headers: { "Content-Type": "text/plain" }
-    });
-  }
-}
 
 async function staleWhileRevalidate(request) {
   const cache = await caches.open(STATIC_CACHE);
@@ -129,6 +92,11 @@ async function staleWhileRevalidate(request) {
   const response = await networkPromise;
   if (response) {
     return response;
+  }
+
+  if (request.mode === "navigate") {
+    const offline = await caches.match("/offline");
+    if (offline) return offline;
   }
 
   return new Response("Offline", {
