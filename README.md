@@ -23,29 +23,29 @@ Monorepo implementation of the **Sky World Limited – Software Engineering Inte
 
 | Requirement | Status | Location |
 |---|---|---|
-| RDBMS (PostgreSQL) | ✅ | `database/migration/` |
-| Database name `sky_survey_db` | ✅ | `backend` defaults + `database/sky_survey_db.sql` |
-| ERD | ✅ | [`database/ERD.png`](database/ERD.png), [`database/ERD.dbml`](database/ERD.dbml), [`database/ERD_DETAILED.md`](database/ERD_DETAILED.md) |
-| SQL script | ✅ | [`database/sky_survey_db.sql`](database/sky_survey_db.sql) |
+| RDBMS (PostgreSQL) | Done | `database/migration/` |
+| Database name `sky_survey_db` | Done | `backend` defaults + `database/sky_survey_db.sql` |
+| ERD | Done | [`database/ERD.png`](database/ERD.png), [`database/ERD.dbml`](database/ERD.dbml), [`database/ERD_DETAILED.md`](database/ERD_DETAILED.md) |
+| SQL script | Done | [`database/sky_survey_db.sql`](database/sky_survey_db.sql) |
 
 ### 2. REST API (XML)
 
 | Endpoint | Status |
 |---|---|
-| `POST /api/surveys` | ✅ |
-| `GET /api/surveys` | ✅ |
-| `GET /api/surveys/{id}` | ✅ (extra) |
-| `PUT /api/surveys/{id}` | ✅ |
-| `DELETE /api/surveys/{id}` | ✅ |
-| `POST /api/surveys/{surveyId}/questions` | ✅ |
-| `GET /api/surveys/{surveyId}/questions` | ✅ |
-| `PUT /api/surveys/{surveyId}/questions/{questionId}` | ✅ |
-| `DELETE /api/surveys/{surveyId}/questions/{questionId}` | ✅ |
-| `POST /api/surveys/{surveyId}/responses` (multipart) | ✅ |
-| `GET /api/surveys/{surveyId}/responses` (paginated, email filter) | ✅ |
-| `GET /api/certificates/{id}` (download) | ✅ |
-| XML request/response format | ✅ |
-| Postman collection | ✅ [`backend/SurveyAPI.postman_collection.json`](backend/SurveyAPI.postman_collection.json) |
+| `POST /api/surveys` | Done |
+| `GET /api/surveys` | Done |
+| `GET /api/surveys/{id}` | Done (extra) |
+| `PUT /api/surveys/{id}` | Done |
+| `DELETE /api/surveys/{id}` | Done |
+| `POST /api/surveys/{surveyId}/questions` | Done |
+| `GET /api/surveys/{surveyId}/questions` | Done |
+| `PUT /api/surveys/{surveyId}/questions/{questionId}` | Done |
+| `DELETE /api/surveys/{surveyId}/questions/{questionId}` | Done |
+| `POST /api/surveys/{surveyId}/responses` (multipart) | Done |
+| `GET /api/surveys/{surveyId}/responses` (paginated, email filter) | Done |
+| `GET /api/certificates/{id}` (download) | Done |
+| XML request/response format | Done |
+| Postman collection | Done [`backend/SurveyAPI.postman_collection.json`](backend/SurveyAPI.postman_collection.json) |
 
 **Question types:** `short_text`, `long_text`, `email`, `choice` (single + multiple via `multiple` attribute), `file`.
 
@@ -53,15 +53,15 @@ Monorepo implementation of the **Sky World Limited – Software Engineering Inte
 
 | Page | Status | Route |
 |---|---|---|
-| Survey management (CRUD) | ✅ | `/admin/surveys` |
-| Question management + options | ✅ | `/admin/surveys/{id}/questions` |
-| Available surveys | ✅ | `/surveys` |
-| Survey details | ✅ | `/surveys/{id}` |
-| Stepped survey form (dynamic) | ✅ | `/surveys/{id}/respond` |
-| Review before submit | ✅ | Final step in respond flow |
-| Response management | ✅ | `/admin/surveys/{id}/responses` |
-| Email filter + pagination | ✅ | Responses page |
-| Certificate download/preview | ✅ | Response detail modal |
+| Survey management (CRUD) | Done | `/admin/surveys` |
+| Question management + options | Done | `/admin/surveys/{id}/questions` |
+| Available surveys | Done | `/surveys` |
+| Survey details | Done | `/surveys/{id}` |
+| Stepped survey form (dynamic) | Done | `/surveys/{id}/respond` |
+| Review before submit | Done | Final step in respond flow |
+| Response management | Done | `/admin/surveys/{id}/responses` |
+| Email filter + pagination | Done | Responses page |
+| Certificate download/preview | Done | Response detail modal |
 
 **Survey form requirements:** one question per step, Previous/Next, hide Previous on step 1, required validation, review page, multipart XML submission, dynamic controls per question type — all implemented.
 
@@ -69,10 +69,10 @@ Monorepo implementation of the **Sky World Limited – Software Engineering Inte
 
 | Requirement | Status | Notes |
 |---|---|---|
-| Survey discovery on mobile | ✅ | Responsive web + PWA |
-| Survey completion on mobile | ✅ | `/surveys/{id}/respond` |
-| Separate `simple-survey-mobile` repo | ⚠️ | Delivered as **installable PWA** in the web repo |
-| APK publish | ⚠️ | Install via **Add to Home Screen** (iOS/Android) or ship a TWA/APK wrapper separately |
+| Survey discovery on mobile | Done | Responsive web + PWA |
+| Survey completion on mobile | Done | `/surveys/{id}/respond` |
+| Separate `simple-survey-mobile` repo | Partial | Delivered as **installable PWA** in the web repo |
+| APK publish | Partial | Install via **Add to Home Screen** (iOS/Android) or ship a TWA/APK wrapper separately |
 
 See [`mobile/APK_BUILD_GUIDE.md`](mobile/APK_BUILD_GUIDE.md) to build a real Android APK, and [`frontend/README.md`](frontend/README.md#mobile-pwa) for PWA install.
 
