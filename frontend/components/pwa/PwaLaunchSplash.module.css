@@ -67,37 +67,33 @@
 
 .halo {
   position: absolute;
-  inset: -38%;
+  inset: -42%;
   border-radius: 50%;
   background: radial-gradient(
     circle,
-    rgba(16, 185, 129, 0.38) 0%,
-    rgba(13, 148, 136, 0.16) 38%,
-    transparent 68%
+    rgba(16, 185, 129, 0.34) 0%,
+    rgba(13, 148, 136, 0.14) 40%,
+    transparent 70%
   );
-  filter: blur(18px);
+  filter: blur(22px);
+  pointer-events: none;
 }
 
-.logoFrame {
+.logoCluster {
   position: relative;
-  isolation: isolate;
-  border-radius: 24%;
-  overflow: hidden;
-  box-shadow:
-    0 0 0 1px rgba(13, 148, 136, 0.35),
-    0 0 48px rgba(13, 148, 136, 0.45),
-    0 24px 64px rgba(0, 0, 0, 0.55);
+  filter: drop-shadow(0 0 32px rgba(13, 148, 136, 0.38)) drop-shadow(0 18px 42px rgba(0, 0, 0, 0.42));
+}
+
+.logoImage {
+  display: block;
+  border-radius: 22%;
 }
 
 .logoSweep {
   position: absolute;
-  inset: -40% -70%;
-  background: linear-gradient(
-    115deg,
-    transparent 38%,
-    rgba(255, 255, 255, 0.5) 50%,
-    transparent 62%
-  );
+  inset: 0;
+  border-radius: 22%;
+  overflow: hidden;
   pointer-events: none;
 }
 
