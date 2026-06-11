@@ -258,14 +258,21 @@ export default function SurveyRespondPage() {
   };
 
   const submitSurvey = async () => {
-    const email = buildSubmissionEmail(records);
-    const answers = records.map((record) => ({
-      // Use slug as questionId — backend maps by question name (slug)
-      questionId: record.question.slug ?? record.question.id,
-      value: record.question.type === "FILE_UPLOAD" ? record.files.map((file) => file.name) : record.answer
-    }));
+    const submissionRecords = recordsRef.current;
+    const email = buildSubmissionEmail(submissionRecords);
+    const answers = submissionRecords.map((record) => {
+      const questionId = (record.question.slug ?? record.question.id).trim();
+      return {
+        // Use slug as questionId — backend maps by question name (slug)
+        questionId,
+        value:
+          record.question.type === "FILE_UPLOAD"
+            ? record.files.map((file) => file.name)
+            : record.answer
+      };
+    });
 
-    const files = records.flatMap((record) => record.files);
+    const files = submissionRecords.flatMap((record) => record.files);
 
     setSubmissionEmail(email);
     await submitMutation.mutateAsync({

@@ -8,8 +8,9 @@ import { TalentVaultToggle } from "@/components/admin/TalentVaultToggle";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { getAnswerAction } from "@/lib/responseAnswerActions";
+import { buildOrderedAnswerEntries, slugToLabel } from "@/lib/responseUtils";
 import { cn, formatDateTime } from "@/lib/utils";
-import type { QuestionType } from "@/types/question";
+import type { Question, QuestionType } from "@/types/question";
 import type { SurveyResponseSummary } from "@/types/survey";
 import styles from "./ResponseDetailModal.module.css";
 
@@ -89,13 +90,6 @@ const footerVariants = {
   visible: { opacity: 1, y: 0, transition: { delay: 0.28, ...softSpring } },
   exit: { opacity: 0, y: 10, transition: { duration: 0.15 } }
 };
-
-// Label map: converts snake_case question slugs to readable labels
-function toLabel(key: string): string {
-  return key
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase());
-}
 
 function AnswerActionButton({
   fieldKey,
@@ -199,7 +193,7 @@ function savePdf(response: SurveyResponseSummary, surveyName: string) {
 
   for (const [key, val] of Object.entries(answers)) {
     if (knownMeta.has(key)) continue;
-    lines.push(`${toLabel(key)}: ${val || "—"}`);
+    lines.push(`${slugToLabel(key)}: ${val || "—"}`);
   }
 
   if (response.certificates.length > 0) {
@@ -241,7 +235,7 @@ function savePdf(response: SurveyResponseSummary, surveyName: string) {
         const valueHtml = parts.length > 1
           ? parts.map((p: string) => `<span class="tag">${p}</span>`).join(" ")
           : `<span>${v || "—"}</span>`;
-        return `<div class="row"><div class="label">${toLabel(k)}</div><div class="value">${valueHtml}</div></div>`;
+        return `<div class="row"><div class="label">${slugToLabel(k)}</div><div class="value">${valueHtml}</div></div>`;
       })
       .join("\n")}
   </div>
@@ -264,6 +258,7 @@ function savePdf(response: SurveyResponseSummary, surveyName: string) {
 export function ResponseDetailModal({
   response,
   surveyName,
+  questions,
   questionTypeMap,
   vaultLoading,
   onToggleVault,
@@ -272,6 +267,7 @@ export function ResponseDetailModal({
 }: {
   response: SurveyResponseSummary | null;
   surveyName: string;
+  questions?: Question[];
   questionTypeMap?: Map<string, QuestionType>;
   vaultLoading?: boolean;
   onToggleVault?: (response: SurveyResponseSummary) => void;
@@ -299,8 +295,7 @@ export function ResponseDetailModal({
   if (!mounted) return null;
 
   const answers = response?.answers ?? {};
-  const knownMeta = new Set(["response_id"]);
-  const answerEntries = Object.entries(answers).filter(([k]) => !knownMeta.has(k));
+  const answerEntries = buildOrderedAnswerEntries(answers, questions);
 
   const motionPanel = reduceMotion
     ? { initial: false, animate: { opacity: 1 }, exit: { opacity: 0 } }
@@ -445,7 +440,7 @@ export function ResponseDetailModal({
                 </motion.p>
                 <div className="space-y-1">
                   {answerEntries.length > 0 ? (
-                    answerEntries.map(([key, val], i) => (
+                    answerEntries.map(({ key, label, value }, i) => (
                       <motion.div
                         key={key}
                         custom={i}
@@ -460,12 +455,12 @@ export function ResponseDetailModal({
                         className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--bg-surface)] px-4 py-3"
                       >
                         <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[color:var(--text-muted)]">
-                          {toLabel(key)}
+                          {label}
                         </div>
                         <div className="mt-1">
                           <AnswerValue
                             fieldKey={key}
-                            value={val}
+                            value={value}
                             questionType={questionTypeMap?.get(key)}
                           />
                         </div>

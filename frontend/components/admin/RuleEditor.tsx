@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { wrapFlowText } from "@/lib/branchFlowLayout";
 import { cn } from "@/lib/utils";
 import { ruleSchema, type RuleFormValues } from "@/lib/validators/rule";
 import type { Question } from "@/types/question";
@@ -417,19 +418,23 @@ export function RuleEditor({
 
 // ─── Directed graph visualization ────────────────────────────────────────────
 
-const NODE_W = 160;
-const NODE_H = 52;
-const COL_GAP = 80;
-const ROW_GAP = 24;
+const NODE_W = 200;
+const COL_GAP = 96;
+const ROW_GAP = 20;
+const LINE_H = 14;
+const NODE_PAD = 12;
 
 type GraphNode = {
   id: string;
   label: string;
-  text: string;
+  textLines: string[];
+  slugLine: string;
   col: number;
   row: number;
   x: number;
   y: number;
+  width: number;
+  height: number;
   isBranchable: boolean;
 };
 
@@ -451,14 +456,19 @@ function buildGraph(questions: Question[], rules: SurveyRule[]) {
 
   for (const q of always) {
     const slug = q.slug ?? q.id;
+    const textLines = wrapFlowText(q.text, 28, 2);
+    const height = NODE_PAD * 2 + textLines.length * LINE_H + 14;
     nodes.push({
       id: slug,
       label: slug,
-      text: q.text.length > 22 ? q.text.slice(0, 20) + "…" : q.text,
+      textLines,
+      slugLine: slug,
       col: 0,
       row: row++,
       x: 0,
       y: 0,
+      width: NODE_W,
+      height,
       isBranchable: BRANCHABLE_TYPES.has(q.type)
     });
   }
@@ -471,27 +481,44 @@ function buildGraph(questions: Question[], rules: SurveyRule[]) {
     const srcNode = srcRule ? nodes.find((n) => n.id === srcRule.sourceQuestionName) : null;
     const r = condRow.get(slug) ?? (srcNode ? srcNode.row : row++);
     condRow.set(slug, r);
+    const textLines = wrapFlowText(q.text, 28, 2);
+    const height = NODE_PAD * 2 + textLines.length * LINE_H + 14;
     nodes.push({
       id: slug,
       label: slug,
-      text: q.text.length > 22 ? q.text.slice(0, 20) + "…" : q.text,
+      textLines,
+      slugLine: slug,
       col: 1,
       row: r,
       x: 0,
       y: 0,
+      width: NODE_W,
+      height,
       isBranchable: BRANCHABLE_TYPES.has(q.type)
     });
   }
 
-  // Compute pixel positions
-  const rowCount = Math.max(...nodes.map((n) => n.row), 0) + 1;
-  nodes.forEach((n) => {
-    n.x = n.col * (NODE_W + COL_GAP) + 16;
-    n.y = n.row * (NODE_H + ROW_GAP) + 16;
+  const rowHeights = new Map<number, number>();
+  nodes.forEach((node) => {
+    rowHeights.set(node.row, Math.max(rowHeights.get(node.row) ?? 0, node.height));
   });
 
-  const svgW = nodes.length > 0 ? Math.max(...nodes.map((n) => n.x + NODE_W)) + 24 : 200;
-  const svgH = rowCount * (NODE_H + ROW_GAP) + 16;
+  const rowCount = Math.max(...nodes.map((n) => n.row), 0) + 1;
+  const rowOffsets: number[] = [];
+  let yCursor = 16;
+  for (let rowIndex = 0; rowIndex < rowCount; rowIndex += 1) {
+    rowOffsets[rowIndex] = yCursor;
+    yCursor += (rowHeights.get(rowIndex) ?? 56) + ROW_GAP;
+  }
+
+  nodes.forEach((n) => {
+    n.x = n.col * (NODE_W + COL_GAP) + 16;
+    const rowHeight = rowHeights.get(n.row) ?? n.height;
+    n.y = rowOffsets[n.row] + (rowHeight - n.height) / 2;
+  });
+
+  const svgW = nodes.length > 0 ? Math.max(...nodes.map((n) => n.x + n.width)) + 24 : 200;
+  const svgH = yCursor + 8;
 
   // Build edges
   const edges = rules.map((rule) => {
@@ -539,14 +566,15 @@ function RuleGraph({ rules, questions }: { rules: SurveyRule[]; questions: Quest
 
           {/* Edges */}
           {edges.map(({ src, tgt, label }, i) => {
-            const x1 = src.x + NODE_W;
-            const y1 = src.y + NODE_H / 2;
+            const x1 = src.x + src.width;
+            const y1 = src.y + src.height / 2;
             const x2 = tgt.x;
-            const y2 = tgt.y + NODE_H / 2;
+            const y2 = tgt.y + tgt.height / 2;
             const mx = (x1 + x2) / 2;
             const d = `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`;
-            const labelX = mx;
-            const labelY = (y1 + y2) / 2 - 6;
+            const labelLines = wrapFlowText(label, 16, 2);
+            const labelWidth = Math.min(120, Math.max(56, labelLines[0].length * 6.5));
+            const labelHeight = labelLines.length * 12 + 8;
 
             return (
               <g key={i}>
@@ -560,24 +588,43 @@ function RuleGraph({ rules, questions }: { rules: SurveyRule[]; questions: Quest
                   animate={{ pathLength: 1, opacity: 1 }}
                   transition={{ duration: 0.5, delay: i * 0.08 }}
                 />
-                <rect
-                  x={labelX - 20}
-                  y={labelY - 8}
-                  width={40}
-                  height={16}
-                  rx={8}
-                  fill="rgba(13,148,136,0.14)"
-                />
-                <text
-                  x={labelX}
-                  y={labelY + 4}
-                  textAnchor="middle"
-                  fontSize={9}
-                  fill="rgba(16,185,129,0.9)"
-                  fontFamily="monospace"
+                <foreignObject
+                  x={mx - labelWidth / 2}
+                  y={(y1 + y2) / 2 - labelHeight / 2}
+                  width={labelWidth}
+                  height={labelHeight}
                 >
-                  {label.length > 6 ? label.slice(0, 5) + "…" : label}
-                </text>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "1px",
+                      minHeight: "100%",
+                      padding: "3px 8px",
+                      borderRadius: "999px",
+                      border: "1px solid rgba(13,148,136,0.35)",
+                      background: "rgba(6,10,9,0.92)",
+                      textAlign: "center"
+                    }}
+                  >
+                    {labelLines.map((line, lineIndex) => (
+                      <span
+                        key={`${i}-${lineIndex}`}
+                        style={{
+                          fontSize: "9px",
+                          lineHeight: 1.25,
+                          color: "rgba(16,185,129,0.95)",
+                          fontFamily: "var(--font-mono)",
+                          wordBreak: "break-word"
+                        }}
+                      >
+                        {line}
+                      </span>
+                    ))}
+                  </div>
+                </foreignObject>
               </g>
             );
           })}
@@ -593,31 +640,54 @@ function RuleGraph({ rules, questions }: { rules: SurveyRule[]; questions: Quest
               <rect
                 x={node.x}
                 y={node.y}
-                width={NODE_W}
-                height={NODE_H}
+                width={node.width}
+                height={node.height}
                 rx={10}
                 fill={node.isBranchable ? "rgba(13,148,136,0.16)" : "rgba(17,29,24,0.9)"}
                 stroke={node.isBranchable ? "rgba(13,148,136,0.5)" : "rgba(13,148,136,0.18)"}
                 strokeWidth={1}
               />
-              <text
-                x={node.x + 10}
-                y={node.y + 18}
-                fontSize={10}
-                fontFamily="monospace"
-                fill="rgba(13,148,136,0.9)"
-              >
-                {node.label.length > 18 ? node.label.slice(0, 16) + "…" : node.label}
-              </text>
-              <text
-                x={node.x + 10}
-                y={node.y + 34}
-                fontSize={10}
-                fontFamily="sans-serif"
-                fill="rgba(232,245,242,0.75)"
-              >
-                {node.text}
-              </text>
+              <foreignObject x={node.x} y={node.y} width={node.width} height={node.height}>
+                <div
+                  style={{
+                    display: "flex",
+                    height: "100%",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                    padding: "10px 12px",
+                    boxSizing: "border-box",
+                    overflow: "hidden"
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: "10px",
+                      fontFamily: "var(--font-mono)",
+                      color: "rgba(13,148,136,0.9)",
+                      overflowWrap: "anywhere",
+                      wordBreak: "break-all"
+                    }}
+                  >
+                    {node.slugLine}
+                  </div>
+                  <div style={{ marginTop: "4px", display: "flex", flexDirection: "column", gap: "1px" }}>
+                    {node.textLines.map((line, lineIndex) => (
+                      <span
+                        key={`${node.id}-${lineIndex}`}
+                        style={{
+                          fontSize: "11px",
+                          lineHeight: 1.3,
+                          color: "rgba(232,245,242,0.82)",
+                          overflowWrap: "anywhere",
+                          wordBreak: "break-word"
+                        }}
+                      >
+                        {line}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </foreignObject>
             </motion.g>
           ))}
         </svg>

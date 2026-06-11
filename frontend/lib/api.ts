@@ -1,5 +1,6 @@
 import axios, { AxiosError, type AxiosInstance, type AxiosRequestConfig } from "axios";
 import { parseXML, buildXML, isXmlString } from "./xml";
+import { deriveResponseIdentity, parseResponseAnswers } from "./responseUtils";
 import { toastService } from "./toast-service";
 import {
   ensureArray,
@@ -330,24 +331,17 @@ const toResponses = (payload: unknown): PaginatedResponses => {
 
     const dateResponded = safeText(data.date_responded || data.dateResponded || data.respondedAt);
 
-    // Dynamic answer keys — everything except known metadata fields
-    const SKIP = new Set(["response_id", "certificates", "date_responded", "shortlisted", "@_response_id"]);
     const shortlisted =
       safeText(data.shortlisted).toLowerCase() === "yes" ||
       safeText(data["@_shortlisted"]).toLowerCase() === "yes";
-    const answers: Record<string, string> = {};
-    for (const [key, value] of Object.entries(data)) {
-      if (!SKIP.has(key) && !key.startsWith("@_")) {
-        answers[key] = safeText(value);
-      }
-    }
+    const answers = parseResponseAnswers(data);
+    const identity = deriveResponseIdentity(answers);
 
     return {
       id,
       surveyId: "",
-      // Try common question name conventions; fall back to empty string
-      fullName: answers.full_name || answers.fullName || answers.name || "",
-      email: answers.email_address || answers.email || "",
+      fullName: identity.fullName,
+      email: identity.email,
       gender: answers.gender || undefined,
       programmingStack: answers.primary_backend_stack
         ? answers.primary_backend_stack.split("|").map((s) => s.trim()).filter(Boolean)
@@ -457,7 +451,9 @@ export const surveyApi = {
         url: `/api/surveys/${surveyId}/responses`,
         method: "GET",
         params: {
-          ...params,
+          page: params?.page,
+          pageSize: params?.size,
+          email: params?.email,
           ...(params?.shortlisted ? { shortlisted: true } : {})
         }
       })
@@ -567,13 +563,20 @@ export const surveyApi = {
     };
   },
   submitSurveyResponse: async ({ surveyId, email, answers, files }: SurveySubmissionPayload) => {
+    const normalizedAnswers = answers
+      .map((answer) => ({
+        questionId: safeText(answer.questionId).trim(),
+        value: Array.isArray(answer.value) ? answer.value.join("|") : safeText(answer.value)
+      }))
+      .filter((answer) => answer.questionId);
+
     const xmlPayload = buildXML({
       question_response: {
         answers: {
-          answer: answers.map((answer) => ({
+          answer: normalizedAnswers.map((answer) => ({
             // Backend expects question_name (slug) and answer_value
             question_name: answer.questionId,
-            answer_value: Array.isArray(answer.value) ? answer.value.join("|") : answer.value ?? ""
+            answer_value: answer.value
           }))
         }
       }

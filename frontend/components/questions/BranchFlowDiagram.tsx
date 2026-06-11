@@ -26,6 +26,29 @@ function nodeClass(kind: string): string {
   }
 }
 
+function FlowNodeContent({
+  titleLines,
+  subtitle,
+  compact
+}: {
+  titleLines: string[];
+  subtitle?: string;
+  compact?: boolean;
+}) {
+  return (
+    <div className={styles.nodeContent}>
+      <div className={compact ? styles.nodeTitleCompact : styles.nodeTitle}>
+        {titleLines.map((line, index) => (
+          <span key={`${line}-${index}`} className={styles.nodeTitleLine}>
+            {line}
+          </span>
+        ))}
+      </div>
+      {subtitle ? <div className={styles.nodeSubtitle}>{subtitle}</div> : null}
+    </div>
+  );
+}
+
 export function BranchFlowDiagram({ questions, rules, surveyName }: BranchFlowDiagramProps) {
   const layout = useMemo(() => buildBranchFlowLayout(questions, rules), [questions, rules]);
   const nodeById = useMemo(() => new Map(layout.nodes.map((node) => [node.id, node])), [layout.nodes]);
@@ -75,6 +98,7 @@ export function BranchFlowDiagram({ questions, rules, surveyName }: BranchFlowDi
           viewBox={`0 0 ${layout.width} ${layout.height}`}
           role="img"
           aria-label="Survey branching flow diagram"
+          preserveAspectRatio="xMinYMin meet"
         >
           <defs>
             <marker
@@ -106,6 +130,8 @@ export function BranchFlowDiagram({ questions, rules, surveyName }: BranchFlowDi
 
             const { path, labelX, labelY } = buildEdgePath(from, to, edge.kind);
             const isBranch = edge.kind === "branch";
+            const labelHeight = edge.labelLines.length * 13 + 8;
+            const labelWidth = Math.min(148, Math.max(72, ...edge.labelLines.map((line) => line.length * 6.5)));
 
             return (
               <g key={edge.id}>
@@ -114,10 +140,21 @@ export function BranchFlowDiagram({ questions, rules, surveyName }: BranchFlowDi
                   className={`${styles.edge} ${isBranch ? styles.edgeBranch : styles.edgeSequence}`}
                   markerEnd={`url(#${isBranch ? "flow-arrow-branch" : "flow-arrow-sequence"})`}
                 />
-                {edge.label ? (
-                  <text x={labelX} y={labelY} textAnchor="middle" className={styles.edgeLabel}>
-                    {edge.label}
-                  </text>
+                {edge.labelLines.length > 0 ? (
+                  <foreignObject
+                    x={labelX - labelWidth / 2}
+                    y={labelY - labelHeight / 2}
+                    width={labelWidth}
+                    height={labelHeight}
+                  >
+                    <div className={styles.edgeLabelWrap}>
+                      {edge.labelLines.map((line, index) => (
+                        <span key={`${edge.id}-${index}`} className={styles.edgeLabelText}>
+                          {line}
+                        </span>
+                      ))}
+                    </div>
+                  </foreignObject>
                 ) : null}
               </g>
             );
@@ -131,14 +168,13 @@ export function BranchFlowDiagram({ questions, rules, surveyName }: BranchFlowDi
                 rx={node.kind === "start" || node.kind === "end" ? 999 : 14}
                 className={`${styles.nodeRect} ${nodeClass(node.kind)}`}
               />
-              <text x={14} y={26} className={styles.nodeTitle}>
-                {node.title}
-              </text>
-              {node.subtitle ? (
-                <text x={14} y={44} className={styles.nodeSubtitle}>
-                  {node.subtitle}
-                </text>
-              ) : null}
+              <foreignObject x={0} y={0} width={node.width} height={node.height}>
+                <FlowNodeContent
+                  titleLines={node.titleLines}
+                  subtitle={node.subtitle}
+                  compact={node.kind === "start" || node.kind === "end"}
+                />
+              </foreignObject>
             </g>
           ))}
         </svg>

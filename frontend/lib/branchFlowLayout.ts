@@ -7,6 +7,7 @@ export type FlowNode = {
   id: string;
   name: string;
   title: string;
+  titleLines: string[];
   subtitle?: string;
   kind: FlowNodeKind;
   x: number;
@@ -22,6 +23,7 @@ export type FlowEdge = {
   from: string;
   to: string;
   label?: string;
+  labelLines: string[];
   kind: FlowEdgeKind;
 };
 
@@ -32,23 +34,81 @@ export type BranchFlowLayout = {
   height: number;
 };
 
-const NODE_W = 220;
-const NODE_H = 64;
+const NODE_W = 240;
+const LINE_HEIGHT = 15;
+const PAD_Y = 12;
+const SUBTITLE_H = 16;
 const SMALL_H = 40;
 const V_GAP = 28;
 const BRANCH_V_GAP = 12;
 const MAIN_X = 40;
-const BRANCH_X = 320;
+const BRANCH_X = 340;
 const PADDING = 24;
+const MAX_TITLE_LINES = 3;
+const MAX_LABEL_LINES = 2;
 
 function questionName(question: Question): string {
   return question.slug ?? question.id;
 }
 
-function truncate(text: string, max = 42): string {
-  const trimmed = text.trim();
-  if (trimmed.length <= max) return trimmed;
-  return `${trimmed.slice(0, max - 1)}…`;
+export function wrapFlowText(text: string, maxCharsPerLine: number, maxLines: number): string[] {
+  const words = text.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return [""];
+
+  const lines: string[] = [];
+  let current = "";
+
+  for (const word of words) {
+    const candidate = current ? `${current} ${word}` : word;
+    if (candidate.length <= maxCharsPerLine) {
+      current = candidate;
+      continue;
+    }
+
+    if (current) {
+      lines.push(current);
+      current = word;
+    } else {
+      lines.push(`${word.slice(0, maxCharsPerLine - 1)}…`);
+      current = "";
+    }
+
+    if (lines.length >= maxLines) break;
+  }
+
+  if (lines.length < maxLines && current) {
+    lines.push(current.length > maxCharsPerLine ? `${current.slice(0, maxCharsPerLine - 1)}…` : current);
+  }
+
+  if (lines.length > maxLines) {
+    const trimmed = lines.slice(0, maxLines);
+    const last = trimmed[maxLines - 1];
+    trimmed[maxLines - 1] = last.endsWith("…") ? last : `${last.slice(0, maxCharsPerLine - 1)}…`;
+    return trimmed;
+  }
+
+  return lines.length > 0 ? lines : [""];
+}
+
+function nodeHeight(titleLines: string[], hasSubtitle: boolean): number {
+  const titleBlock = titleLines.length * LINE_HEIGHT;
+  const subtitleBlock = hasSubtitle ? SUBTITLE_H : 0;
+  return Math.max(SMALL_H, PAD_Y * 2 + titleBlock + subtitleBlock);
+}
+
+function buildNodeTitle(question: Question | undefined, fallback: string): { titleLines: string[]; subtitle?: string } {
+  const titleLines = wrapFlowText(question?.text ?? fallback, 34, MAX_TITLE_LINES);
+  const subtitle = question ? questionName(question) : fallback;
+  return { titleLines, subtitle };
+}
+
+function buildEdgeLabel(rules: BranchingRule[]): string[] {
+  if (rules.length === 0) return [];
+  const combined =
+    rules.length === 1
+      ? rules[0].triggerValue
+      : rules.map((rule) => rule.triggerValue).join(" · ");
+  return wrapFlowText(combined, 22, MAX_LABEL_LINES);
 }
 
 export function buildBranchFlowLayout(questions: Question[], rules: BranchingRule[]): BranchFlowLayout {
@@ -77,6 +137,7 @@ export function buildBranchFlowLayout(questions: Question[], rules: BranchingRul
     id: "__start__",
     name: "start",
     title: "Survey start",
+    titleLines: ["Survey start"],
     kind: "start",
     x: MAIN_X,
     y: cursorY,
@@ -86,57 +147,61 @@ export function buildBranchFlowLayout(questions: Question[], rules: BranchingRul
 
   cursorY += SMALL_H + V_GAP;
 
-  const surveyPositions = new Map<string, number>();
-
   surveyFlow.forEach((question, index) => {
     const name = questionName(question);
     const inboundRules = rulesBySource.get(name) ?? [];
     const uniqueTargets = [...new Set(inboundRules.map((rule) => rule.targetQuestionName))];
-    const branchBlockHeight = Math.max(
-      NODE_H,
-      uniqueTargets.length * NODE_H + Math.max(0, uniqueTargets.length - 1) * BRANCH_V_GAP
-    );
-    const rowHeight = Math.max(NODE_H, branchBlockHeight);
 
-    surveyPositions.set(name, cursorY);
+    const { titleLines, subtitle } = buildNodeTitle(question, name);
+    const surveyHeight = nodeHeight(titleLines, true);
+
+    const branchHeights = uniqueTargets.map((targetName) => {
+      const targetQuestion = targetByName.get(targetName);
+      const targetTitle = buildNodeTitle(targetQuestion, targetName);
+      return nodeHeight(targetTitle.titleLines, true);
+    });
+
+    const branchBlockHeight =
+      branchHeights.length > 0
+        ? branchHeights.reduce((sum, h, i) => sum + h + (i > 0 ? BRANCH_V_GAP : 0), 0)
+        : 0;
+    const rowHeight = Math.max(surveyHeight, branchBlockHeight);
 
     nodes.push({
       id: `survey:${name}`,
       name,
-      title: truncate(question.text),
-      subtitle: name,
+      title: question.text,
+      titleLines,
+      subtitle,
       kind: "survey",
       x: MAIN_X,
-      y: cursorY + (rowHeight - NODE_H) / 2,
+      y: cursorY + (rowHeight - surveyHeight) / 2,
       width: NODE_W,
-      height: NODE_H
+      height: surveyHeight
     });
 
     const sourceCenterY = cursorY + rowHeight / 2;
-    const targetStartY = sourceCenterY - branchBlockHeight / 2;
+    let branchCursorY = sourceCenterY - branchBlockHeight / 2;
 
     uniqueTargets.forEach((targetName, targetIndex) => {
       const targetQuestion = targetByName.get(targetName);
       const matchingRules = inboundRules.filter((rule) => rule.targetQuestionName === targetName);
-      const triggerLabel =
-        matchingRules.length === 1
-          ? matchingRules[0].triggerValue
-          : matchingRules.map((rule) => rule.triggerValue).join(" / ");
-
-      const targetY = targetStartY + targetIndex * (NODE_H + BRANCH_V_GAP);
+      const targetTitle = buildNodeTitle(targetQuestion, targetName);
+      const targetHeight = branchHeights[targetIndex] ?? nodeHeight(targetTitle.titleLines, true);
       const targetId = `target:${targetName}`;
 
       if (!targetNodes.has(targetName)) {
         const targetNode: FlowNode = {
           id: targetId,
           name: targetName,
-          title: truncate(targetQuestion?.text ?? targetName),
+          title: targetQuestion?.text ?? targetName,
+          titleLines: targetTitle.titleLines,
           subtitle: targetName,
           kind: "target",
           x: BRANCH_X,
-          y: targetY,
+          y: branchCursorY,
           width: NODE_W,
-          height: NODE_H
+          height: targetHeight
         };
         targetNodes.set(targetName, targetNode);
         nodes.push(targetNode);
@@ -146,9 +211,12 @@ export function buildBranchFlowLayout(questions: Question[], rules: BranchingRul
         id: `branch:${name}:${targetName}:${targetIndex}`,
         from: `survey:${name}`,
         to: targetId,
-        label: triggerLabel,
+        label: matchingRules.map((rule) => rule.triggerValue).join(" · "),
+        labelLines: buildEdgeLabel(matchingRules),
         kind: "branch"
       });
+
+      branchCursorY += targetHeight + BRANCH_V_GAP;
     });
 
     const previousId = index === 0 ? "__start__" : `survey:${questionName(surveyFlow[index - 1])}`;
@@ -156,6 +224,7 @@ export function buildBranchFlowLayout(questions: Question[], rules: BranchingRul
       id: `sequence:${previousId}:survey:${name}`,
       from: previousId,
       to: `survey:${name}`,
+      labelLines: [],
       kind: "sequence"
     });
 
@@ -169,6 +238,7 @@ export function buildBranchFlowLayout(questions: Question[], rules: BranchingRul
     id: "__end__",
     name: "end",
     title: "Survey complete",
+    titleLines: ["Survey complete"],
     kind: "end",
     x: MAIN_X,
     y: cursorY,
@@ -180,6 +250,7 @@ export function buildBranchFlowLayout(questions: Question[], rules: BranchingRul
     id: `sequence:${lastMainId}:__end__`,
     from: lastMainId,
     to: "__end__",
+    labelLines: [],
     kind: "sequence"
   });
 
@@ -187,20 +258,23 @@ export function buildBranchFlowLayout(questions: Question[], rules: BranchingRul
 
   if (orphanTargets.length > 0) {
     cursorY += V_GAP;
-    orphanTargets.forEach(([name, question], index) => {
+    orphanTargets.forEach(([name, question]) => {
+      const targetTitle = buildNodeTitle(question, name);
+      const height = nodeHeight(targetTitle.titleLines, true);
       nodes.push({
         id: `target:${name}`,
         name,
-        title: truncate(question.text),
+        title: question.text,
+        titleLines: targetTitle.titleLines,
         subtitle: `${name} (unlinked)`,
         kind: "target",
         x: BRANCH_X,
-        y: cursorY + index * (NODE_H + BRANCH_V_GAP),
+        y: cursorY,
         width: NODE_W,
-        height: NODE_H
+        height
       });
+      cursorY += height + BRANCH_V_GAP;
     });
-    cursorY += orphanTargets.length * (NODE_H + BRANCH_V_GAP);
   }
 
   const maxNodeBottom = nodes.reduce((max, node) => Math.max(max, node.y + node.height), 0);
@@ -231,5 +305,5 @@ export function buildEdgePath(
   const endX = to.x;
   const midX = (startX + endX) / 2;
   const path = `M ${startX} ${start.y} C ${midX} ${start.y}, ${midX} ${end.y}, ${endX} ${end.y}`;
-  return { path, labelX: midX, labelY: (start.y + end.y) / 2 - 8 };
+  return { path, labelX: midX, labelY: (start.y + end.y) / 2 - 10 };
 }

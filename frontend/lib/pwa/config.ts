@@ -7,4 +7,7 @@ export const PWA_START_URL = "/surveys";
 export const SW_URL = "/sw.js";
 export const SW_SCOPE = "/";
 export const INSTALL_DISMISS_KEY = "skyworld-pwa-install-dismissed";
+export const INSTALL_INSTALLED_KEY = "skyworld-pwa-installed";
+export const INSTALL_SESSION_SEEN_KEY = "skyworld-pwa-install-seen-session";
+export const BROWSER_CONTINUE_KEY = "skyworld-pwa-browser-continue";
 export const INSTALL_DISMISS_DAYS = 14;

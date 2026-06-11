@@ -25,8 +25,9 @@ import { ResponseAnswerActions } from "@/components/admin/ResponseAnswerActions"
 import { ResponseDetailModal } from "@/components/admin/ResponseDetailModal";
 import { useQuestions, useResponses, useResponsesActions, useSurvey, useTalentVault } from "@/lib/hooks";
 import { buildQuestionTypeMap, collectResponseActions } from "@/lib/responseAnswerActions";
-import { cn, formatDateTime, formatRelativeTime } from "@/lib/utils";
-import type { QuestionType } from "@/types/question";
+import { buildOrderedAnswerEntries, deriveResponseIdentity } from "@/lib/responseUtils";
+import { cn, formatDateTime, formatRelativeTime, truncate } from "@/lib/utils";
+import type { Question, QuestionType } from "@/types/question";
 import type { SurveyResponseSummary } from "@/types/survey";
 
 const pageSizeOptions = [10, 25, 50] as const;
@@ -35,6 +36,7 @@ type ResponseView = "all" | "vault";
 function ResponseCard({
   response,
   index,
+  questions,
   questionTypeMap,
   vaultLoading,
   onClick,
@@ -42,13 +44,16 @@ function ResponseCard({
 }: {
   response: SurveyResponseSummary;
   index: number;
+  questions?: Question[];
   questionTypeMap?: Map<string, QuestionType>;
   vaultLoading?: boolean;
   onClick: () => void;
   onToggleVault: (response: SurveyResponseSummary) => void;
 }) {
   const answers = response.answers ?? {};
-  const answerCount = Object.keys(answers).length;
+  const answerEntries = buildOrderedAnswerEntries(answers, questions);
+  const answerCount = answerEntries.length;
+  const previewEntries = answerEntries.slice(0, 4);
   const hasCerts = response.certificates.length > 0;
   const quickActions = collectResponseActions(response, questionTypeMap).slice(0, 3);
   const reduceMotion = useReducedMotion();
@@ -125,15 +130,14 @@ function ResponseCard({
               {/* Answer preview chips */}
               {answerCount > 0 ? (
                 <div className="mt-3 flex flex-wrap gap-1.5">
-                  {Object.entries(answers)
-                    .slice(0, 4)
-                    .map(([key, val]) => (
+                  {previewEntries.map(({ key, label, value }) => (
                       <span
                         key={key}
-                        className="max-w-[14rem] truncate rounded-full border border-[color:var(--border)] bg-[color:var(--bg-elevated)] px-2.5 py-0.5 font-mono text-[11px] text-[color:var(--text-secondary)]"
-                        title={`${key}: ${val}`}
+                        className="max-w-full truncate rounded-full border border-[color:var(--border)] bg-[color:var(--bg-elevated)] px-2.5 py-0.5 text-[11px] text-[color:var(--text-secondary)] sm:max-w-[18rem]"
+                        title={`${label}: ${value}`}
                       >
-                        {val || "—"}
+                        <span className="font-medium text-[color:var(--text-muted)]">{label}:</span>{" "}
+                        {truncate(value || "—", 42)}
                       </span>
                     ))}
                   {answerCount > 4 ? (
@@ -241,7 +245,19 @@ export default function SurveyResponsesPage() {
   };
 
   const data = responsesQuery.data;
-  const responses: SurveyResponseSummary[] = data?.items ?? [];
+  const questions = questionsQuery.data ?? [];
+  const responses: SurveyResponseSummary[] = useMemo(
+    () =>
+      (data?.items ?? []).map((response) => {
+        const identity = deriveResponseIdentity(response.answers ?? {}, questions);
+        return {
+          ...response,
+          fullName: identity.fullName || response.fullName,
+          email: identity.email || response.email
+        };
+      }),
+    [data?.items, questions]
+  );
   const lastPage = data?.lastPage ?? 1;
   const totalCount = data?.totalCount ?? 0;
 
@@ -381,6 +397,7 @@ export default function SurveyResponsesPage() {
               key={response.id}
               response={response}
               index={index}
+              questions={questions}
               questionTypeMap={questionTypeMap}
               vaultLoading={vaultTargetId === response.id && toggleVault.isPending}
               onClick={() => setSelectedResponse(response)}
@@ -452,6 +469,7 @@ export default function SurveyResponsesPage() {
       <ResponseDetailModal
         response={selectedResponse}
         surveyName={surveyName}
+        questions={questions}
         questionTypeMap={questionTypeMap}
         vaultLoading={Boolean(selectedResponse && vaultTargetId === selectedResponse.id && toggleVault.isPending)}
         onToggleVault={handleToggleVault}

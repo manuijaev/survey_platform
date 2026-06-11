@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { InstallPrompt } from "@/components/pwa/InstallPrompt";
+import { OpenInAppPrompt } from "@/components/pwa/OpenInAppPrompt";
+import { markPwaInstalled, isStandaloneDisplayMode } from "@/lib/pwa/pwaStorage";
 import { UpdateBanner } from "@/components/pwa/UpdateBanner";
 import { activateWaitingWorker, registerServiceWorker } from "@/lib/pwa/registerServiceWorker";
 import type { ReactNode } from "react";
@@ -13,6 +15,12 @@ type PwaProviderProps = {
 export function PwaProvider({ children }: PwaProviderProps) {
   const [updateReady, setUpdateReady] = useState(false);
   const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
+
+  useEffect(() => {
+    if (isStandaloneDisplayMode()) {
+      markPwaInstalled();
+    }
+  }, []);
 
   useEffect(() => {
     const shouldRegister =
@@ -76,6 +84,7 @@ export function PwaProvider({ children }: PwaProviderProps) {
   return (
     <>
       {children}
+      <OpenInAppPrompt />
       <InstallPrompt />
       {updateReady ? <UpdateBanner onReload={reloadForUpdate} /> : null}
     </>
