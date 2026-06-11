@@ -458,16 +458,32 @@ export function ResponseDetailModal({
   };
 
   const handlePreviewCertificate = async (cert: { id: string; filename: string }) => {
+    if (!cert.id?.trim()) {
+      toastService.error("Preview failed", "This upload has no file reference. Try a new submission.");
+      return;
+    }
+
     setPreviewLoadingId(cert.id);
     try {
-      const fileResponse = await surveyApi.previewCertificate(cert.id);
-      const rawBlob = fileResponse.data as Blob;
+      const response = await fetch(surveyApi.getCertificatePreviewUrl(cert.id));
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+        const detail =
+          response.status === 410
+            ? "The file is no longer on the server (it may have been lost after a redeploy)."
+            : payload?.message || "The document could not be loaded.";
+        toastService.error("Preview failed", detail);
+        return;
+      }
+
+      const rawBlob = await response.blob();
       const pdfBlob =
         rawBlob.type === "application/pdf"
           ? rawBlob
           : new Blob([rawBlob], { type: "application/pdf" });
-      const url = URL.createObjectURL(pdfBlob);
+
       if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+      const url = URL.createObjectURL(pdfBlob);
       previewUrlRef.current = url;
       setPreview({ filename: cert.filename, url });
     } catch {

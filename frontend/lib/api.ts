@@ -504,8 +504,8 @@ export const surveyApi = {
   },
   downloadCertificate: async (certificateId: string) =>
     blobApi.get(`/api/certificates/${certificateId}`),
-  previewCertificate: async (certificateId: string) =>
-    blobApi.get(`/api/certificates/${certificateId}/preview`),
+  getCertificatePreviewUrl: (certificateId: string) =>
+    `/api/certificates/${certificateId}/preview`,
   getNextQuestion: async (
     surveyId: string,
     answeredQuestions: string[],
