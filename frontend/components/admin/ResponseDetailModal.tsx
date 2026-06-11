@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Download, ExternalLink, FileText, X, Printer, CalendarDays, Mail } from "lucide-react";
+import { Download, ExternalLink, Eye, FileText, X, Printer, CalendarDays, Mail } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { TalentVaultToggle } from "@/components/admin/TalentVaultToggle";
@@ -16,6 +16,8 @@ import {
   slugToLabel,
   splitAnswerValues
 } from "@/lib/responseUtils";
+import { surveyApi } from "@/lib/api";
+import { toastService } from "@/lib/toast-service";
 import { cn, formatDateTime } from "@/lib/utils";
 import type { Question, QuestionType } from "@/types/question";
 import type { SurveyResponseSummary } from "@/types/survey";
@@ -139,10 +141,14 @@ function AnswerActionButton({
 function FileUploadRow({
   filename,
   cert,
+  previewLoading,
+  onPreviewCertificate,
   onDownloadCertificate
 }: {
   filename: string;
   cert?: { id: string; filename: string };
+  previewLoading?: boolean;
+  onPreviewCertificate: (cert: { id: string; filename: string }) => void;
   onDownloadCertificate: (cert: { id: string; filename: string }) => void;
 }) {
   return (
@@ -157,16 +163,29 @@ function FileUploadRow({
         </div>
       </div>
       {cert ? (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="w-full shrink-0 sm:w-auto"
-          leftIcon={<Download className="h-3.5 w-3.5" />}
-          onClick={() => onDownloadCertificate(cert)}
-        >
-          Download
-        </Button>
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="w-full sm:w-auto"
+            loading={previewLoading}
+            leftIcon={<Eye className="h-3.5 w-3.5" />}
+            onClick={() => onPreviewCertificate(cert)}
+          >
+            Preview
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="w-full sm:w-auto"
+            leftIcon={<Download className="h-3.5 w-3.5" />}
+            onClick={() => onDownloadCertificate(cert)}
+          >
+            Download
+          </Button>
+        </div>
       ) : (
         <span className="text-xs text-[color:var(--text-muted)]">Uploaded</span>
       )}
@@ -174,13 +193,48 @@ function FileUploadRow({
   );
 }
 
+function CertificatePreviewPanel({
+  filename,
+  url,
+  onClose
+}: {
+  filename: string;
+  url: string;
+  onClose: () => void;
+}) {
+  return (
+    <div className="absolute inset-0 z-20 flex flex-col rounded-[inherit] bg-[color:var(--bg-elevated)]">
+      <div className="flex items-center justify-between gap-3 border-b border-[color:var(--border)] px-4 py-3 sm:px-5">
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--text-muted)]">
+            Document preview
+          </p>
+          <p className="truncate text-sm font-medium text-[color:var(--text-primary)]">{filename}</p>
+        </div>
+        <Button type="button" variant="ghost" size="sm" onClick={onClose}>
+          Close preview
+        </Button>
+      </div>
+      <iframe
+        src={url}
+        title={`Preview ${filename}`}
+        className="min-h-0 flex-1 w-full bg-white"
+      />
+    </div>
+  );
+}
+
 function FileUploadAnswerValue({
   value,
   certificates,
+  previewLoadingId,
+  onPreviewCertificate,
   onDownloadCertificate
 }: {
   value: string;
   certificates: SurveyResponseSummary["certificates"];
+  previewLoadingId?: string | null;
+  onPreviewCertificate: (cert: { id: string; filename: string }) => void;
   onDownloadCertificate: (cert: { id: string; filename: string }) => void;
 }) {
   const rows = resolveFileUploadRows(value, certificates);
@@ -196,6 +250,8 @@ function FileUploadAnswerValue({
           key={`${cert?.id ?? "file"}-${filename}`}
           filename={filename}
           cert={cert}
+          previewLoading={Boolean(cert && previewLoadingId === cert.id)}
+          onPreviewCertificate={onPreviewCertificate}
           onDownloadCertificate={onDownloadCertificate}
         />
       ))}
@@ -209,12 +265,16 @@ function AnswerValue({
   value,
   questionType,
   certificates = [],
+  previewLoadingId,
+  onPreviewCertificate,
   onDownloadCertificate
 }: {
   fieldKey: string;
   value: string;
   questionType?: QuestionType;
   certificates?: SurveyResponseSummary["certificates"];
+  previewLoadingId?: string | null;
+  onPreviewCertificate?: (cert: { id: string; filename: string }) => void;
   onDownloadCertificate?: (cert: { id: string; filename: string }) => void;
 }) {
   if (isFileUploadAnswer(fieldKey, value, questionType, certificates)) {
@@ -222,6 +282,8 @@ function AnswerValue({
       <FileUploadAnswerValue
         value={value}
         certificates={certificates}
+        previewLoadingId={previewLoadingId}
+        onPreviewCertificate={onPreviewCertificate ?? (() => undefined)}
         onDownloadCertificate={onDownloadCertificate ?? (() => undefined)}
       />
     );
@@ -369,22 +431,67 @@ export function ResponseDetailModal({
   onDownloadCertificate: (cert: { id: string; filename: string }) => void;
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
+  const previewUrlRef = useRef<string | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [preview, setPreview] = useState<{ filename: string; url: string } | null>(null);
+  const [previewLoadingId, setPreviewLoadingId] = useState<string | null>(null);
   const reduceMotion = useReducedMotion();
 
   useEffect(() => { setMounted(true); }, []);
+
+  const closePreview = () => {
+    if (previewUrlRef.current) {
+      URL.revokeObjectURL(previewUrlRef.current);
+      previewUrlRef.current = null;
+    }
+    setPreview(null);
+    setPreviewLoadingId(null);
+  };
+
+  const handlePreviewCertificate = async (cert: { id: string; filename: string }) => {
+    setPreviewLoadingId(cert.id);
+    try {
+      const fileResponse = await surveyApi.downloadCertificate(cert.id);
+      const url = URL.createObjectURL(fileResponse.data as Blob);
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+      previewUrlRef.current = url;
+      setPreview({ filename: cert.filename, url });
+    } catch {
+      toastService.error("Preview failed", "The document could not be loaded.");
+    } finally {
+      setPreviewLoadingId(null);
+    }
+  };
+
+  useEffect(() => {
+    if (!response) closePreview();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [response?.id]);
+
+  useEffect(() => {
+    return () => {
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (!response) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      if (preview) {
+        closePreview();
+        return;
+      }
+      onClose();
+    };
     document.addEventListener("keydown", onKey);
     return () => {
       document.body.style.overflow = prev;
       document.removeEventListener("keydown", onKey);
     };
-  }, [response, onClose]);
+  }, [response, onClose, preview]);
 
   if (!mounted) return null;
 
@@ -444,7 +551,8 @@ export function ResponseDetailModal({
               aria-label={`Response from ${response.fullName}`}
               className={cn(
                 "relative flex w-full flex-col overflow-hidden rounded-t-[2rem] border border-[color:var(--glass-border)] bg-[color:var(--bg-elevated)] sm:rounded-[2rem]",
-                styles.panel
+                styles.panel,
+                preview && "overflow-hidden"
               )}
               style={{ maxHeight: "90vh", transformOrigin: "center bottom" }}
               {...motionPanel}
@@ -562,6 +670,8 @@ export function ResponseDetailModal({
                             value={value}
                             questionType={resolveQuestionType(key, questionTypeMap, questions)}
                             certificates={response.certificates}
+                            previewLoadingId={previewLoadingId}
+                            onPreviewCertificate={handlePreviewCertificate}
                             onDownloadCertificate={onDownloadCertificate}
                           />
                         </div>
@@ -597,6 +707,8 @@ export function ResponseDetailModal({
                         <FileUploadRow
                           filename={cert.filename}
                           cert={cert}
+                          previewLoading={previewLoadingId === cert.id}
+                          onPreviewCertificate={handlePreviewCertificate}
                           onDownloadCertificate={onDownloadCertificate}
                         />
                       </motion.div>
@@ -605,6 +717,14 @@ export function ResponseDetailModal({
                 </div>
               ) : null}
             </div>
+
+            {preview ? (
+              <CertificatePreviewPanel
+                filename={preview.filename}
+                url={preview.url}
+                onClose={closePreview}
+              />
+            ) : null}
 
             {/* Footer */}
             <motion.div

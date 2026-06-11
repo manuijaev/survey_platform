@@ -23,6 +23,7 @@ declare module "lucide-react" {
   export const Circle: ComponentType<IconProps>;
   export const Download: ComponentType<IconProps>;
   export const Edit3: ComponentType<IconProps>;
+  export const Eye: ComponentType<IconProps>;
   export const ExternalLink: ComponentType<IconProps>;
   export const FileText: ComponentType<IconProps>;
   export const GripVertical: ComponentType<IconProps>;
