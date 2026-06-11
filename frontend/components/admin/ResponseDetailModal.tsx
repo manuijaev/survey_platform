@@ -135,6 +135,44 @@ function AnswerActionButton({
   );
 }
 
+function FileUploadRow({
+  filename,
+  cert,
+  onDownloadCertificate
+}: {
+  filename: string;
+  cert?: { id: string; filename: string };
+  onDownloadCertificate: (cert: { id: string; filename: string }) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-3 rounded-xl border border-[color:var(--border)] bg-[color:var(--bg-elevated)] px-3 py-3 sm:flex-row sm:items-center">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[color:var(--border)] bg-[color:var(--bg-surface)] text-[color:var(--primary)]">
+          <FileText className="h-4 w-4" />
+        </span>
+        <div className="min-w-0">
+          <div className="truncate text-sm font-medium text-[color:var(--text-primary)]">{filename}</div>
+          <div className="text-xs text-[color:var(--text-muted)]">PDF document</div>
+        </div>
+      </div>
+      {cert ? (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="w-full shrink-0 sm:w-auto"
+          leftIcon={<Download className="h-3.5 w-3.5" />}
+          onClick={() => onDownloadCertificate(cert)}
+        >
+          Download
+        </Button>
+      ) : (
+        <span className="text-xs text-[color:var(--text-muted)]">Uploaded</span>
+      )}
+    </div>
+  );
+}
+
 function FileUploadAnswerValue({
   value,
   certificates,
@@ -145,65 +183,28 @@ function FileUploadAnswerValue({
   onDownloadCertificate: (cert: { id: string; filename: string }) => void;
 }) {
   const files = splitAnswerValues(value);
+  const rows =
+    files.length > 0
+      ? files.map((filename) => ({
+          filename,
+          cert: findCertificateForFilename(filename, certificates)
+        }))
+      : certificates.map((cert) => ({ filename: cert.filename, cert }));
 
-  if (files.length === 0) {
-    if (certificates.length > 0) {
-      return (
-        <div className="space-y-2 pt-1">
-          {certificates.map((cert) => (
-            <button
-              key={cert.id}
-              type="button"
-              onClick={() => onDownloadCertificate(cert)}
-              className="focus-ring flex w-full items-center gap-3 rounded-xl border border-[color:var(--border)] bg-[color:var(--bg-elevated)] px-3 py-2 text-left transition hover:border-[color:var(--primary)]"
-            >
-              <FileText className="h-4 w-4 shrink-0 text-[color:var(--primary)]" />
-              <span className="min-w-0 flex-1 truncate text-sm text-[color:var(--text-primary)]">
-                {cert.filename}
-              </span>
-              <Download className="h-4 w-4 shrink-0 text-[color:var(--primary)]" />
-            </button>
-          ))}
-        </div>
-      );
-    }
+  if (rows.length === 0) {
     return <span className="text-[color:var(--text-muted)]">No files uploaded</span>;
   }
 
   return (
     <div className="space-y-2 pt-1">
-      {files.map((filename) => {
-        const cert = findCertificateForFilename(filename, certificates);
-        if (cert) {
-          return (
-            <button
-              key={`${cert.id}-${filename}`}
-              type="button"
-              onClick={() => onDownloadCertificate(cert)}
-              className="focus-ring flex w-full items-center gap-3 rounded-xl border border-[color:var(--border)] bg-[color:var(--bg-elevated)] px-3 py-2 text-left transition hover:border-[color:var(--primary)]"
-            >
-              <FileText className="h-4 w-4 shrink-0 text-[color:var(--primary)]" />
-              <span className="min-w-0 flex-1 truncate text-sm text-[color:var(--text-primary)]">
-                {filename}
-              </span>
-              <Download className="h-4 w-4 shrink-0 text-[color:var(--primary)]" />
-            </button>
-          );
-        }
-
-        return (
-          <div
-            key={filename}
-            className="flex items-center gap-3 rounded-xl border border-[color:var(--border)] bg-[color:var(--bg-elevated)] px-3 py-2"
-          >
-            <FileText className="h-4 w-4 shrink-0 text-[color:var(--text-muted)]" />
-            <span className="min-w-0 flex-1 truncate text-sm text-[color:var(--text-primary)]">
-              {filename}
-            </span>
-            <span className="text-xs text-[color:var(--text-muted)]">Uploaded</span>
-          </div>
-        );
-      })}
+      {rows.map(({ filename, cert }) => (
+        <FileUploadRow
+          key={`${cert?.id ?? "file"}-${filename}`}
+          filename={filename}
+          cert={cert}
+          onDownloadCertificate={onDownloadCertificate}
+        />
+      ))}
     </div>
   );
 }
@@ -252,6 +253,8 @@ function AnswerValue({
     );
   }
 
+  const action = getAnswerAction(fieldKey, value, questionType);
+
   // Long text answers
   if (value.length > 80) {
     return (
@@ -259,7 +262,9 @@ function AnswerValue({
         <p className="mt-1 text-sm leading-6 text-[color:var(--text-primary)] whitespace-pre-wrap">
           {value}
         </p>
-        <AnswerActionButton fieldKey={fieldKey} value={value} questionType={questionType} />
+        {action ? (
+          <AnswerActionButton fieldKey={fieldKey} value={value} questionType={questionType} />
+        ) : null}
       </>
     );
   }
@@ -267,7 +272,9 @@ function AnswerValue({
   return (
     <>
       <span className="text-sm text-[color:var(--text-primary)]">{value}</span>
-      <AnswerActionButton fieldKey={fieldKey} value={value} questionType={questionType} />
+      {action ? (
+        <AnswerActionButton fieldKey={fieldKey} value={value} questionType={questionType} />
+      ) : null}
     </>
   );
 }
@@ -584,33 +591,19 @@ export function ResponseDetailModal({
                   </motion.p>
                   <div className="space-y-2">
                     {orphanCertificates.map((cert, i) => (
-                      <motion.button
+                      <motion.div
                         key={cert.id}
-                        type="button"
                         custom={answerEntries.length + i}
                         variants={reduceMotion ? undefined : answerCard}
                         initial={reduceMotion ? false : "hidden"}
                         animate={reduceMotion ? undefined : "visible"}
-                        whileHover={
-                          reduceMotion
-                            ? undefined
-                            : { y: -2, scale: 1.01, transition: snapSpring }
-                        }
-                        whileTap={reduceMotion ? undefined : { scale: 0.98 }}
-                        onClick={() => onDownloadCertificate(cert)}
-                        className="focus-ring flex w-full items-center gap-3 rounded-2xl border border-[color:var(--border)] bg-[color:var(--bg-surface)] px-4 py-3 text-left transition hover:border-[color:var(--primary)] hover:bg-[rgba(13,148,136,0.08)]"
                       >
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[color:var(--border)] bg-[color:var(--bg-elevated)] text-[color:var(--primary)]">
-                          <FileText className="h-4 w-4" />
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <div className="truncate text-sm font-medium text-[color:var(--text-primary)]">
-                            {cert.filename}
-                          </div>
-                          <div className="text-xs text-[color:var(--text-muted)]">Click to download</div>
-                        </div>
-                        <Download className="h-4 w-4 shrink-0 text-[color:var(--primary)]" />
-                      </motion.button>
+                        <FileUploadRow
+                          filename={cert.filename}
+                          cert={cert}
+                          onDownloadCertificate={onDownloadCertificate}
+                        />
+                      </motion.div>
                     ))}
                   </div>
                 </div>

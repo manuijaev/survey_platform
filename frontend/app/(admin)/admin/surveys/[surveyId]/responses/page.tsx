@@ -44,7 +44,8 @@ function ResponseCard({
   questionTypeMap,
   vaultLoading,
   onClick,
-  onToggleVault
+  onToggleVault,
+  onDownloadCertificate
 }: {
   response: SurveyResponseSummary;
   index: number;
@@ -53,6 +54,7 @@ function ResponseCard({
   vaultLoading?: boolean;
   onClick: () => void;
   onToggleVault: (response: SurveyResponseSummary) => void;
+  onDownloadCertificate: (cert: { id: string; filename: string }) => void;
 }) {
   const answers = response.answers ?? {};
   const answerEntries = buildOrderedAnswerEntries(answers, questions);
@@ -176,6 +178,9 @@ function ResponseCard({
           actions={quickActions}
           className="mt-3 flex flex-wrap gap-2"
           onActionClick={(event) => event.stopPropagation()}
+          onDownloadCertificate={(cert) => {
+            onDownloadCertificate(cert);
+          }}
         />
       ) : null}
     </motion.div>
@@ -409,6 +414,7 @@ export default function SurveyResponsesPage() {
               vaultLoading={vaultTargetId === response.id && toggleVault.isPending}
               onClick={() => setSelectedResponse(response)}
               onToggleVault={handleToggleVault}
+              onDownloadCertificate={(cert) => downloadCertificate.mutate(cert)}
             />
           ))}
         </div>
