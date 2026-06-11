@@ -26,7 +26,7 @@ export function PwaProvider({ children }: PwaProviderProps) {
     const shouldRegister =
       process.env.NODE_ENV === "production" || process.env.NEXT_PUBLIC_ENABLE_PWA === "true";
 
-    if (!shouldRegister) {
+    if (!shouldRegister || !("serviceWorker" in navigator)) {
       return;
     }
 

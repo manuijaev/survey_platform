@@ -3,7 +3,7 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Download, ExternalLink, X } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { InstallRitual, type InstallRitualOrigin } from "@/components/pwa/InstallRitual";
 import { PWA_SHORT_NAME } from "@/lib/pwa/config";
 import { isMobileDevice, resolveMobileInstallMode, type InstallPromptMode } from "@/lib/pwa/platform";
@@ -71,34 +71,6 @@ export function InstallPrompt() {
     };
   }, [isRespondFlow, pathname]);
 
-  if (isRespondFlow || mode === "hidden") {
-    return null;
-  }
-
-  const dismiss = () => {
-    markInstallDismissed();
-    setMode("hidden");
-    setRitualOpen(false);
-    deferredRef.current = null;
-  };
-
-  const resolveOrigin = (target?: HTMLElement | null): InstallRitualOrigin => {
-    const rect = target?.getBoundingClientRect();
-    if (rect) {
-      return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-    }
-    return { x: window.innerWidth / 2, y: window.innerHeight - 96 };
-  };
-
-  const beginRitual = (target?: HTMLElement | null) => {
-    setRitualOrigin(resolveOrigin(target));
-    setRitualOpen(true);
-  };
-
-  const closeRitual = () => {
-    setRitualOpen(false);
-  };
-
   useEffect(() => {
     if (!ritualOpen) {
       document.body.style.overflow = "";
@@ -112,7 +84,31 @@ export function InstallPrompt() {
     };
   }, [ritualOpen]);
 
-  const runNativeInstall = async (): Promise<"accepted" | "dismissed" | "unavailable"> => {
+  const dismiss = useCallback(() => {
+    markInstallDismissed();
+    setMode("hidden");
+    setRitualOpen(false);
+    deferredRef.current = null;
+  }, []);
+
+  const resolveOrigin = useCallback((target?: HTMLElement | null): InstallRitualOrigin => {
+    const rect = target?.getBoundingClientRect();
+    if (rect) {
+      return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+    }
+    return { x: window.innerWidth / 2, y: window.innerHeight - 96 };
+  }, []);
+
+  const beginRitual = useCallback((target?: HTMLElement | null) => {
+    setRitualOrigin(resolveOrigin(target));
+    setRitualOpen(true);
+  }, [resolveOrigin]);
+
+  const closeRitual = useCallback(() => {
+    setRitualOpen(false);
+  }, []);
+
+  const runNativeInstall = useCallback(async (): Promise<"accepted" | "dismissed" | "unavailable"> => {
     const deferredPrompt = deferredRef.current;
     if (!deferredPrompt) return "unavailable";
 
@@ -129,12 +125,16 @@ export function InstallPrompt() {
     markInstallDismissed();
     setMode("hidden");
     return "dismissed";
-  };
+  }, []);
 
-  const handlePrimaryAction = (event: React.MouseEvent<HTMLButtonElement>) => {
-    beginRitual(event.currentTarget);
-  };
+  const handlePrimaryAction = useCallback(
+    (event: React.MouseEvent<HTMLButtonElement>) => {
+      beginRitual(event.currentTarget);
+    },
+    [beginRitual]
+  );
 
+  const showBanner = !isRespondFlow && mode !== "hidden" && !ritualOpen;
   const copy = getPromptCopy(mode);
   const primaryLabel =
     mode === "native"
@@ -146,7 +146,7 @@ export function InstallPrompt() {
   return (
     <>
       <AnimatePresence>
-        {!ritualOpen ? (
+        {showBanner ? (
           <motion.div
             key="install-banner"
             className="fixed bottom-4 left-4 right-4 z-[70] mx-auto max-w-lg sm:left-auto sm:right-6"
@@ -227,14 +227,16 @@ export function InstallPrompt() {
         ) : null}
       </AnimatePresence>
 
-      <InstallRitual
-        open={ritualOpen}
-        origin={ritualOrigin}
-        mode={mode}
-        copy={copy}
-        onClose={closeRitual}
-        onNativeInstall={mode === "native" ? runNativeInstall : undefined}
-      />
+      {ritualOpen ? (
+        <InstallRitual
+          open={ritualOpen}
+          origin={ritualOrigin}
+          mode={mode}
+          copy={copy}
+          onClose={closeRitual}
+          onNativeInstall={mode === "native" ? runNativeInstall : undefined}
+        />
+      ) : null}
     </>
   );
 }
