@@ -20,11 +20,11 @@ export function PublicShell({ children }: { children: ReactNode }) {
     <div className="min-h-screen">
       <header
         className={cn(
-          "border-b border-[color:var(--border)] bg-[rgba(6,10,9,0.62)] backdrop-blur-xl",
+          "app-header sticky top-0 z-40 border-b border-[color:var(--border)] bg-[rgba(6,10,9,0.88)] backdrop-blur-xl",
           compactHeader && "hidden sm:block"
         )}
       >
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4 lg:px-8">
+        <div className="app-header-inner mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4 lg:px-8">
           <Link href="/surveys" className="flex min-w-0 items-center gap-2 sm:gap-3">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-[color:var(--border)] bg-[color:var(--bg-elevated)] text-[color:var(--primary)] shadow-[0_0_24px_rgba(13,148,136,0.14)]">
               <FileText className="h-5 w-5" />
@@ -46,7 +46,7 @@ export function PublicShell({ children }: { children: ReactNode }) {
                   href={item.href}
                   aria-label={item.label}
                   className={cn(
-                    "focus-ring inline-flex min-h-11 items-center gap-2 rounded-full border px-3 py-2 text-sm transition sm:px-4",
+                    "app-nav-btn focus-ring inline-flex min-h-11 items-center gap-2 rounded-full border px-3 py-2 text-sm transition sm:px-4",
                     active
                       ? "border-[color:var(--border-active)] bg-[rgba(13,148,136,0.14)] text-[color:var(--text-primary)] shadow-[0_0_22px_rgba(13,148,136,0.12)]"
                       : "border-[color:var(--border)] bg-[color:var(--bg-surface)] text-[color:var(--text-secondary)] hover:border-[color:var(--border-active)] hover:text-[color:var(--text-primary)]"

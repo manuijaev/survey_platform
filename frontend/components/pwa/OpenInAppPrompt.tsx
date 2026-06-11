@@ -55,7 +55,7 @@ export function OpenInAppPrompt() {
   };
 
   return (
-    <div className="fixed inset-x-0 top-0 z-50 border-b border-[color:var(--border-active)] bg-[rgba(6,10,9,0.94)] px-4 py-3 backdrop-blur-xl">
+    <div className="safe-top fixed inset-x-0 top-0 z-50 border-b border-[color:var(--border-active)] bg-[rgba(6,10,9,0.94)] px-4 pb-3 backdrop-blur-xl">
       <div className="mx-auto flex max-w-4xl flex-col gap-3 sm:flex-row sm:items-center">
         <div className="flex min-w-0 flex-1 items-start gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[color:var(--border)] bg-[color:var(--bg-elevated)] text-[color:var(--primary)]">
@@ -74,7 +74,7 @@ export function OpenInAppPrompt() {
           <button
             type="button"
             onClick={openInApp}
-            className="focus-ring inline-flex min-h-9 items-center gap-1.5 rounded-full border border-[color:var(--border-active)] bg-[rgba(13,148,136,0.18)] px-3 py-1.5 text-xs font-medium text-[color:var(--text-primary)] transition hover:bg-[rgba(13,148,136,0.28)] sm:text-sm sm:px-4 sm:py-2"
+            className="focus-ring app-nav-btn inline-flex min-h-11 items-center gap-1.5 rounded-full border border-[color:var(--border-active)] bg-[rgba(13,148,136,0.18)] px-4 py-2 text-xs font-medium text-[color:var(--text-primary)] transition hover:bg-[rgba(13,148,136,0.28)] sm:text-sm"
           >
             <ExternalLink className="h-3.5 w-3.5" />
             Open app
@@ -82,7 +82,7 @@ export function OpenInAppPrompt() {
           <button
             type="button"
             onClick={continueInBrowser}
-            className="focus-ring rounded-full border border-[color:var(--border)] px-3 py-1.5 text-xs text-[color:var(--text-secondary)] transition hover:text-[color:var(--text-primary)] sm:px-4 sm:py-2 sm:text-sm"
+            className="focus-ring app-nav-btn min-h-11 rounded-full border border-[color:var(--border)] px-4 py-2 text-xs text-[color:var(--text-secondary)] transition hover:text-[color:var(--text-primary)] sm:text-sm"
           >
             Continue in browser
           </button>

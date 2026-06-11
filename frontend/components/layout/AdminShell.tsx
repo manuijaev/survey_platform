@@ -117,10 +117,10 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
       <div className="min-w-0 flex-1" suppressHydrationWarning>
         <div
-          className="border-b border-[color:var(--border)] bg-[rgba(6,10,9,0.66)] px-4 py-3 backdrop-blur-xl lg:hidden"
+          className="app-header sticky top-0 z-40 border-b border-[color:var(--border)] bg-[rgba(6,10,9,0.92)] backdrop-blur-xl lg:hidden"
           suppressHydrationWarning
         >
-          <div className="flex items-center justify-between gap-3">
+          <div className="app-header-inner flex items-center justify-between gap-3 px-4 py-3">
             <Link href="/admin/surveys" className="flex min-w-0 items-center gap-2">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[color:var(--border)] bg-[color:var(--bg-elevated)] text-[color:var(--primary)]">
                 <FileText className="h-4 w-4" />
@@ -135,6 +135,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
             <Button
               variant="ghost"
               size="sm"
+              className="app-nav-btn min-h-11"
               leftIcon={<LogOut className="h-4 w-4" />}
               loading={loggingOut}
               onClick={handleLogout}
@@ -142,34 +143,31 @@ export function AdminShell({ children }: { children: ReactNode }) {
               <span className="sr-only sm:not-sr-only">Log out</span>
             </Button>
           </div>
-        </div>
 
-        <nav
-          className="sticky top-0 z-30 border-b border-[color:var(--border)] bg-[rgba(6,10,9,0.88)] px-2 py-2 backdrop-blur-xl lg:hidden"
-          aria-label="Admin navigation"
-        >
-          <div className="flex gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {primaryNav.map((item) => {
-              const Icon = item.icon;
-              const active = isNavActive(pathname, item.href);
-              return (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  className={cn(
-                    "focus-ring inline-flex min-h-11 shrink-0 items-center gap-2 rounded-2xl border px-4 py-2.5 text-sm font-medium transition",
-                    active
-                      ? "border-[color:var(--border-active)] bg-[rgba(13,148,136,0.14)] text-[color:var(--text-primary)]"
-                      : "border-[color:var(--border)] bg-[color:var(--bg-surface)] text-[color:var(--text-secondary)]"
-                  )}
-                >
-                  <Icon className="h-4 w-4 shrink-0" />
-                  {item.label}
-                </Link>
-              );
-            })}
-          </div>
-        </nav>
+          <nav className="border-t border-[color:var(--border)] px-2 py-2" aria-label="Admin navigation">
+            <div className="flex gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {primaryNav.map((item) => {
+                const Icon = item.icon;
+                const active = isNavActive(pathname, item.href);
+                return (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    className={cn(
+                      "app-nav-btn app-mobile-nav-btn focus-ring inline-flex min-h-11 shrink-0 items-center gap-2 rounded-2xl border px-4 py-2.5 text-sm font-medium transition",
+                      active
+                        ? "border-[color:var(--border-active)] bg-[rgba(13,148,136,0.14)] text-[color:var(--text-primary)]"
+                        : "border-[color:var(--border)] bg-[color:var(--bg-surface)] text-[color:var(--text-secondary)]"
+                    )}
+                  >
+                    <Icon className="h-4 w-4 shrink-0" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          </nav>
+        </div>
 
         <main className="min-h-screen pb-4 lg:pb-0">{children}</main>
       </div>

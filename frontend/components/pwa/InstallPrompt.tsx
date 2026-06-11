@@ -149,7 +149,7 @@ export function InstallPrompt() {
         {showBanner ? (
           <motion.div
             key="install-banner"
-            className="fixed bottom-4 left-4 right-4 z-[70] mx-auto max-w-lg sm:left-auto sm:right-6"
+            className="safe-bottom-fixed fixed left-4 right-4 z-[70] mx-auto max-w-lg sm:left-auto sm:right-6"
             initial={reduceMotion ? false : { opacity: 0, y: 36, scale: 0.94 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 24, scale: 0.96 }}

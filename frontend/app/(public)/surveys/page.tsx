@@ -21,7 +21,7 @@ export default function PublicSurveysPage() {
     <div className="relative min-h-screen overflow-x-hidden">
       <BioluminescentBackdrop className="h-full" />
 
-      <section className="relative mx-auto max-w-7xl px-4 pb-12 pt-20 sm:px-6 lg:px-8 lg:pt-28">
+      <section className="survey-hero relative mx-auto max-w-7xl px-4 pb-12 pt-8 sm:px-6 sm:pt-12 lg:px-8 lg:pt-16">
         <div className="max-w-3xl">
           <div className="text-sm uppercase tracking-[0.3em] text-[color:var(--text-muted)]">Survey collection</div>
           <h1 className="mt-4 font-display text-4xl italic text-[color:var(--text-primary)] sm:text-5xl lg:text-6xl">

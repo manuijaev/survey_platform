@@ -160,7 +160,8 @@ export function InstallRitual({
 
   const showGuide = phase === "guide" || (reduceMotion && mode !== "native");
   const showSuccess = phase === "success";
-  const showHero = phase !== "exit";
+  const showHero = phase !== "exit" && !showGuide;
+  const heroLit = phase === "crown" || phase === "success";
 
   const content = (
     <AnimatePresence mode="wait">
@@ -223,7 +224,7 @@ export function InstallRitual({
                   className="absolute h-1.5 w-1.5 rounded-full bg-[rgba(13,148,136,0.85)]"
                   initial={{ x: 0, y: 0, opacity: 0 }}
                   animate={
-                    phase === "crown" || phase === "success" || phase === "guide"
+                    heroLit
                       ? {
                           x: point.x,
                           y: point.y,
@@ -243,9 +244,7 @@ export function InstallRitual({
                   style={{ width: 220 + ring * 54, height: 220 + ring * 54, x: "-50%", y: "-50%" }}
                   initial={{ scale: 0.4, opacity: 0 }}
                   animate={
-                    phase === "crown" || phase === "success" || phase === "guide"
-                      ? { scale: [0.5, 1.08, 1], opacity: [0, 0.55, 0.18] }
-                      : { opacity: 0 }
+                    heroLit ? { scale: [0.5, 1.08, 1], opacity: [0, 0.55, 0.18] } : { opacity: 0 }
                   }
                   transition={{ delay: 0.72 + ring * 0.12, duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
                 />
@@ -260,7 +259,7 @@ export function InstallRitual({
                     : { x: flightOffset.x, y: flightOffset.y, scale: 0.28, rotate: -18 }
                 }
                 animate={
-                  phase === "flight" || phase === "crown" || phase === "success" || phase === "guide"
+                  phase === "flight" || heroLit
                     ? { x: 0, y: 0, scale: showSuccess ? 1.08 : 1, rotate: 0 }
                     : { x: flightOffset.x, y: flightOffset.y, scale: 0.28, rotate: -18 }
                 }
@@ -285,7 +284,7 @@ export function InstallRitual({
                 className="absolute left-1/2 top-[calc(100%+1.4rem)] w-max max-w-[min(90vw,22rem)] -translate-x-1/2 text-center"
                 initial={{ opacity: 0, y: 18, filter: "blur(6px)" }}
                 animate={
-                  phase === "crown" || phase === "success" || phase === "guide"
+                  heroLit
                     ? { opacity: 1, y: 0, filter: "blur(0px)" }
                     : { opacity: 0, y: 18, filter: "blur(6px)" }
                 }
@@ -307,71 +306,78 @@ export function InstallRitual({
             {showGuide && copy.steps?.length ? (
               <motion.div
                 key="guide"
-                className="absolute inset-x-0 bottom-0 mx-auto flex max-w-lg flex-col items-center px-4 pb-6 sm:pb-8"
-                initial={{ opacity: 0, y: 48 }}
+                className={`absolute inset-0 z-10 flex flex-col overflow-y-auto safe-top safe-bottom ${styles.guidePanel}`}
+                initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 32 }}
+                exit={{ opacity: 0, y: 16 }}
                 transition={heroSpring}
               >
-                <motion.div
-                  className={`${styles.phoneDock} mb-5`}
-                  initial={{ y: 80, rotateX: 18, opacity: 0 }}
-                  animate={{ y: 0, rotateX: 0, opacity: 1 }}
-                  transition={{ delay: 0.08, ...heroSpring }}
-                >
-                  <div className={styles.phoneScreen}>
-                    <motion.div
-                      initial={{ scale: 0.6, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      transition={{ delay: 0.22, ...snapSpring }}
+                <div className="mx-auto flex w-full max-w-lg flex-col gap-4 px-4 pb-4 pt-2">
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={onClose}
+                      aria-label="Close install guide"
+                      className="focus-ring min-h-11 rounded-full border border-[color:var(--border)] bg-[rgba(8,14,12,0.82)] px-4 py-2 text-xs text-[color:var(--text-secondary)] backdrop-blur-md"
                     >
-                      <Image
-                        src="/icons/icon-192.png"
-                        alt=""
-                        width={56}
-                        height={56}
-                        className="rounded-2xl shadow-[0_12px_32px_rgba(0,0,0,0.45)]"
-                      />
-                    </motion.div>
+                      Close
+                    </button>
                   </div>
-                </motion.div>
+                  <div className={`${styles.guideHeader} flex items-start gap-3`}>
+                    <Image
+                      src="/icons/icon-192.png"
+                      alt=""
+                      width={52}
+                      height={52}
+                      className="h-[52px] w-[52px] shrink-0 rounded-2xl border border-[rgba(13,148,136,0.35)] shadow-[0_8px_24px_rgba(0,0,0,0.35)]"
+                    />
+                    <div className="min-w-0 pt-0.5">
+                      <p className="font-display text-2xl leading-tight text-[color:var(--text-primary)]">
+                        {copy.title}
+                      </p>
+                      <p className="mt-1.5 text-sm leading-6 text-[color:var(--text-secondary)]">
+                        {copy.description}
+                      </p>
+                    </div>
+                  </div>
 
-                <div className="w-full space-y-2">
-                  {copy.steps.map((step, index) => (
-                    <motion.div
-                      key={step}
-                      className={`${styles.stepCard} rounded-2xl px-4 py-3`}
-                      initial={{ opacity: 0, x: -24 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.2 + index * 0.12, ...heroSpring }}
-                    >
-                      <div className="flex items-start gap-3">
-                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[color:var(--border-active)] bg-[rgba(13,148,136,0.14)] font-mono text-xs text-[color:var(--primary)]">
-                          {index + 1}
-                        </span>
-                        <p className="text-sm leading-6 text-[color:var(--text-primary)]">{step}</p>
-                      </div>
-                    </motion.div>
-                  ))}
+                  <div className="w-full space-y-2">
+                    {copy.steps.map((step, index) => (
+                      <motion.div
+                        key={step}
+                        className={`${styles.stepCard} rounded-2xl px-4 py-3`}
+                        initial={{ opacity: 0, x: -16 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.12 + index * 0.1, ...heroSpring }}
+                      >
+                        <div className="flex items-start gap-3">
+                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[color:var(--border-active)] bg-[rgba(13,148,136,0.14)] font-mono text-xs text-[color:var(--primary)]">
+                            {index + 1}
+                          </span>
+                          <p className="text-sm leading-6 text-[color:var(--text-primary)]">{step}</p>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+
+                  <motion.button
+                    type="button"
+                    onClick={onClose}
+                    className="focus-ring mt-2 min-h-11 w-full rounded-full border border-[color:var(--border-active)] bg-[rgba(13,148,136,0.18)] px-5 py-2.5 text-sm font-medium text-[color:var(--text-primary)]"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.45 }}
+                  >
+                    Got it
+                  </motion.button>
                 </div>
-
-                <motion.button
-                  type="button"
-                  onClick={onClose}
-                  className="focus-ring mt-5 rounded-full border border-[color:var(--border)] px-5 py-2.5 text-sm text-[color:var(--text-secondary)] transition hover:text-[color:var(--text-primary)]"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.55 }}
-                >
-                  Got it
-                </motion.button>
               </motion.div>
             ) : null}
           </AnimatePresence>
 
           {showGuide && !copy.steps?.length ? (
             <motion.div
-              className="absolute inset-x-0 bottom-8 flex justify-center px-4"
+              className="absolute inset-x-0 safe-bottom-fixed flex justify-center px-4"
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={heroSpring}
@@ -391,7 +397,7 @@ export function InstallRitual({
               type="button"
               onClick={onClose}
               aria-label="Close install animation"
-              className="focus-ring absolute right-4 top-4 rounded-full border border-[color:var(--border)] bg-[rgba(8,14,12,0.72)] px-3 py-1.5 text-xs text-[color:var(--text-secondary)] backdrop-blur-md"
+              className="focus-ring safe-top-fixed absolute right-4 min-h-10 rounded-full border border-[color:var(--border)] bg-[rgba(8,14,12,0.72)] px-3 py-2 text-xs text-[color:var(--text-secondary)] backdrop-blur-md"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.4 }}

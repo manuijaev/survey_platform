@@ -68,7 +68,7 @@ export function PwaLaunchSplash({ onComplete }: { onComplete: () => void }) {
       {visible ? (
         <motion.div
           key="pwa-launch-splash"
-          className={`fixed inset-0 z-[200] flex items-center justify-center overflow-hidden ${styles.root}`}
+          className={`safe-top safe-bottom fixed inset-0 z-[200] flex items-center justify-center overflow-hidden ${styles.root}`}
           initial={{ opacity: 1 }}
           exit={{ opacity: 0, transition: { duration: reduceMotion ? 0.18 : 0.52, ease: fadeEase } }}
         >

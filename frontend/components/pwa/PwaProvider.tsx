@@ -24,10 +24,13 @@ export function PwaProvider({ children }: PwaProviderProps) {
   const [showLaunchSplash, setShowLaunchSplash] = useState(false);
 
   useEffect(() => {
-    if (isStandaloneDisplayMode()) {
-      markPwaInstalled();
-      setShowLaunchSplash(shouldShowPwaLaunchSplash());
-    }
+    if (!isStandaloneDisplayMode()) return;
+    markPwaInstalled();
+    setShowLaunchSplash(shouldShowPwaLaunchSplash());
+    document.documentElement.classList.add("pwa-standalone");
+    return () => {
+      document.documentElement.classList.remove("pwa-standalone");
+    };
   }, []);
 
   useEffect(() => {

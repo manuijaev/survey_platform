@@ -28,6 +28,10 @@
   --font-display: "Instrument Serif", Georgia, serif;
   --font-body: "DM Sans", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
   color-scheme: dark;
 }
 
@@ -326,8 +330,46 @@ select {
   -webkit-line-clamp: 3;
 }
 
+.safe-top {
+  padding-top: calc(var(--safe-top) + 0.75rem);
+}
+
 .safe-bottom {
-  padding-bottom: calc(env(safe-area-inset-bottom) + 0.75rem);
+  padding-bottom: calc(var(--safe-bottom) + 0.75rem);
+}
+
+.safe-top-fixed {
+  top: calc(var(--safe-top) + 0.75rem);
+}
+
+.safe-bottom-fixed {
+  bottom: calc(var(--safe-bottom) + 1rem);
+}
+
+.pwa-standalone .app-header {
+  padding-top: calc(var(--safe-top) + 0.625rem);
+  padding-left: calc(var(--safe-left) + 0px);
+  padding-right: calc(var(--safe-right) + 0px);
+}
+
+.pwa-standalone .app-header-inner {
+  min-height: 3.5rem;
+}
+
+.pwa-standalone .app-nav-btn {
+  min-height: 2.875rem;
+  min-width: 2.875rem;
+  padding-inline: 1rem;
+}
+
+.pwa-standalone .app-mobile-nav-btn {
+  min-height: 2.75rem;
+  min-width: 5.5rem;
+  padding-inline: 0.875rem;
+}
+
+.pwa-standalone .survey-hero {
+  padding-top: 1rem;
 }
 
 @media (max-width: 768px) {
