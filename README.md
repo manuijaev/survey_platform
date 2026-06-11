@@ -4,11 +4,13 @@ Monorepo implementation of the **Sky World Limited – Software Engineering Inte
 
 ## Repositories
 
-| Spec repository | Location | Notes |
+The task specifies three public GitHub repository names. This project maps them as follows:
+
+| Spec repository | Public location | README |
 |---|---|---|
-| `simple-survey-api` | [`backend/`](backend/) + [`database/`](database/) | Spring Boot XML API, Flyway migrations, Postman collection |
-| `simple-survey-web` | [`frontend/`](frontend/) | Next.js admin console and public survey web app |
-| `simple-survey-mobile` | https://github.com/manuijaev/simple-survey-mobile | Android TWA APK + build docs ([`mobile/`](mobile/) in this monorepo) |
+| `simple-survey-api` | [`backend/`](backend/) + [`database/`](database/) in [survey_platform](https://github.com/manuijaev/survey_platform) | [`backend/README.md`](backend/README.md), [`database/README.md`](database/README.md) |
+| `simple-survey-web` | [`frontend/`](frontend/) in [survey_platform](https://github.com/manuijaev/survey_platform) | [`frontend/README.md`](frontend/README.md) |
+| `simple-survey-mobile` | https://github.com/manuijaev/simple-survey-mobile | [`mobile/README.md`](mobile/README.md) |
 
 **Monorepo:** https://github.com/manuijaev/survey_platform
 
@@ -109,7 +111,9 @@ npm run dev
 - Public surveys: http://localhost:3000/surveys
 - Admin: http://localhost:3000/admin/login (default `admin` / `admin123`)
 
-## Submission links
+## Submission
+
+Full submission document (links + task compliance checklist): [`SUBMISSION.md`](SUBMISSION.md) and [SkyWorld-Survey-Platform-Submission.pdf](SkyWorld-Survey-Platform-Submission.pdf)
 
 | Item | URL |
 |---|---|

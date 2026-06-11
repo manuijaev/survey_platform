@@ -32,7 +32,18 @@ bubblewrap build
 
 Also see **[APK_BUILD_GUIDE.md](./APK_BUILD_GUIDE.md)** for PWABuilder (quick alternative).
 
+## Download APK (v1.0.0)
+
+After publishing a GitHub Release, the install file is:
+
+`https://github.com/manuijaev/simple-survey-mobile/releases/download/v1.0.0/app-release-signed.apk`
+
+A copy is also kept in [`releases/skyworld-survey-v1.0.0.apk`](releases/skyworld-survey-v1.0.0.apk).
+
 ## Submission
 
-- **Mobile repo:** this folder / dedicated `simple-survey-mobile` GitHub repo
-- **APK:** attach `skyworld-survey-v1.0.0.apk` to GitHub Releases after building
+- **Mobile repo:** `https://github.com/manuijaev/simple-survey-mobile`
+- **Web monorepo:** `https://github.com/manuijaev/survey_platform`
+- **Live PWA:** https://survey-platform-lemon-one.vercel.app
+
+The Android app is a Trusted Web Activity (TWA) packaging the production PWA. It provides the same mobile survey discovery, stepped completion, and multipart submission experience as the web app.

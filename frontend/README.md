@@ -45,15 +45,19 @@ Next.js 15 frontend for the SkyWorld Survey Platform (`simple-survey-web`), buil
 - The backend supports `page`, `pageSize`, and `email` filters on the responses endpoint.
 - **Mobile** is delivered as a Progressive Web App (installable, standalone display) rather than a separate native codebase, covering survey discovery, completion, and submission on phones.
 
-## Mobile (PWA)
+## Mobile (PWA + Android APK)
 
-The brief requires survey participation on mobile. This repo fulfils that via a PWA:
+Survey participation on mobile is delivered three ways:
 
-1. Open the deployed site (or `http://localhost:3000` with `NEXT_PUBLIC_ENABLE_PWA=true` in production builds).
-2. Use **Install app** / **Add to Home Screen** on Android or iOS Safari.
-3. Launch from the home screen — routes `/surveys`, `/surveys/[id]`, and `/surveys/[id]/respond` are mobile-optimised.
+| Channel | Details |
+|---------|---------|
+| **Android APK** | Signed TWA — https://github.com/manuijaev/simple-survey-mobile/releases/download/v1.0.0/app-release-signed.apk |
+| **PWA (Android/iOS)** | Open https://survey-platform-lemon-one.vercel.app → Install app / Add to Home Screen |
+| **Responsive web** | Same routes on any mobile browser |
 
-For a standalone `simple-survey-mobile` repository or APK submission, you can wrap this PWA with [Bubblewrap/TWA](https://github.com/GoogleChromeLabs/bubblewrap) or document the PWA install path in your submission.
+Mobile repository: https://github.com/manuijaev/simple-survey-mobile
+
+Build docs: [`../mobile/BUBBLEWRAP_SETUP.md`](../mobile/BUBBLEWRAP_SETUP.md), [`../mobile/APK_BUILD_GUIDE.md`](../mobile/APK_BUILD_GUIDE.md)
 
 ## Deployment
 

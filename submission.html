@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="=UTF-8" />
+  <title>SkyWorld Survey Platform — Submission</title>
+  <style>
+    @page { margin: 1.5cm; }
+    body { font-family: "Segoe UI", Helvetica, Arial, san-serif; color: #1a1a1a; line-height: 1.45; font-size: 12px; max-width: 820px; margin: 0 auto; padding: 20px; }
+    h1 { font-size: 20px; margin-bottom: 4px; color: #0d3b2e; }
+    h2 { font-size: 14px; margin-top: 20px; margin-bottom: 6px; color: #0d3b2e; border-bottom: 1px solid #ccc; padding-bottom: 3px; }
+    h3 { font-size: 12px; margin: 14px 0 6px; color: #333; }
+    .meta { color: #555; font-size: 11px; margin-bottom: 16px; }
+    p { margin: 6px 0; }
+    a { color: #0b5; word-break: break-all; }
+    table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 11px; }
+    th, td { border: 1px solid #ddd; padding: 5px 8px; text-align: left; vertical-align: top; }
+    th { background: #f4f4f4; width: 30%; }
+    .ok { color: #0d3b2e; font-weight: 600; }
+    ul { margin: 4px 0; padding-left: 18px; }
+    li { margin: 2px 0; }
+    .footer { margin-top: 16px; font-size: 10px; color: #666; border-top: 1px solid #ddd; padding-top: 8px; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media print { .two-col { grid-template-columns: 1fr 1fr; } }
+  </style>
+</head>
+<body>
+  <h1>SkyWorld Survey Platform — Submission</h1>
+  <div class="meta">
+    <strong>Candidate:</strong> Emmanuel Kenyani &nbsp;|&nbsp;
+    <strong>Task:</strong> Sky World Limited — Software Engineering Intern Pre-Interview Task &nbsp;|&nbsp;
+    <strong>Date:</strong> June 2026
+  </div>
+
+  <h2>Required submission (5 items)</h2>
+  <table>
+    <tr><th>1. API repository</th><td><a href="https://github.com/manuijaev/survey_platform/tree/master/backend">https://github.com/manuijaev/survey_platform/tree/master/backend</a></td></tr>
+    <tr><th>2. Web repository</th><td><a href="https://github.com/manuijaev/survey_platform/tree/master/frontend">https://github.com/manuijaev/survey_platform/tree/master/frontend</a></td></tr>
+    <tr><th>3. Public deployment</th><td><a href="https://survey-platform-lemon-one.vercel.app">https://survey-platform-lemon-one.vercel.app</a></td></tr>
+    <tr><th>4. Mobile repository</th><td><a href="https://github.com/manuijaev/simple-survey-mobile">https://github.com/manuijaev/simple-survey-mobile</a></td></tr>
+    <tr><th>5. Mobile APK</th><td><a href="https://github.com/manuijaev/simple-survey-mobile/releases/download/v1.0.0/app-release-signed.apk">https://github.com/manuijaev/simple-survey-mobile/releases/download/v1.0.0/app-release-signed.apk</a></td></tr>
+  </table>
+
+  <h2>Repository mapping (spec names)</h2>
+  <table>
+    <tr><th>Monorepo</th><td><a href="https://github.com/manuijaev/survey_platform">https://github.com/manuijaev/survey_platform</a></td></tr>
+    <tr><th>simple-survey-api</th><td><code>backend/</code> + <code>database/</code> in monorepo</td></tr>
+    <tr><th>simple-survey-web</th><td><code>frontend/</code> in monorepo</td></tr>
+    <tr><th>simple-survey-mobile</th><td>Separate repo (above)</td></tr>
+  </table>
+
+  <h2>Public deployment and admin access</h2>
+  <table>
+    <tr><th>Web app</th><td><a href="https://survey-platform-lemon-one.vercel.app">https://survey-platform-lemon-one.vercel.app</a></td></tr>
+    <tr><th>Surveys</th><td><a href="https://survey-platform-lemon-one.vercel.app/surveys">https://survey-platform-lemon-one.vercel.app/surveys</a></td></tr>
+    <tr><th>Admin login</th><td><a href="https://survey-platform-lemon-one.vercel.app/admin/login">https://survey-platform-lemon-one.vercel.app/admin/login</a></td></tr>
+    <tr><th>Username</th><td><code>admin</code></td></tr>
+    <tr><th>Password</th><td><code>admin123</code></td></tr>
+  </table>
+
+  <h2>Task compliance summary</h2>
+
+  <h3>Database — PostgreSQL, sky_survey_db</h3>
+  <table>
+    <tr><th>ERD diagram</th><td class="ok">Done</td><td><a href="https://github.com/manuijaev/survey_platform/blob/master/database/ERD.png">database/ERD.png</a></td></tr>
+    <tr><th>SQL script</th><td class="ok">Done</td><td><a href="https://github.com/manuijaev/survey_platform/blob/master/database/sky_survey_db.sql">database/sky_survey_db.sql</a></td></tr>
+    <tr><th>Postman collection</th><td class="ok">Done</td><td><code>backend/SurveyAPI.postman_collection.json</code></td></tr>
+  </table>
+
+  <h3>REST API — XML endpoints</h3>
+  <p class="ok">All required endpoints implemented: survey CRUD, question CRUD, multipart response submit, paginated responses with email filter, certificate download. Question types: short text, long text, email, single/multiple choice, file (PDF).</p>
+
+  <h3>Web UI — five pages</h3>
+  <table>
+    <tr><th>Survey management</th><td class="ok">Done</td><td><code>/admin/surveys</code></td></tr>
+    <tr><th>Question + options</th><td class="ok">Done</td><td><code>/admin/surveys/{id}/questions</code></td></tr>
+    <tr><th>Available surveys</th><td class="ok">Done</td><td><code>/surveys</code></td></tr>
+    <tr><th>Survey form (stepped, dynamic)</th><td class="ok">Done</td><td><code>/surveys/{id}/respond</code></td></tr>
+    <tr><th>Responses + filter + certs</th><td class="ok">Done</td><td><code>/admin/surveys/{id}/responses</code></td></tr>
+  </table>
+  <p>Stepped form: one question per step, Previous/Next, review before submit, required validation, controls from API metadata (no code changes for new questions).</p>
+
+  <h3>Mobile</h3>
+  <table>
+    <tr><th>Discovery + completion</th><td class="ok">Done</td><td>Web, PWA, and signed Android TWA APK</td></tr>
+    <tr><th>APK release</th><td class="ok">Done</td><td>v1.0.0, package <code>com.skyworld.survey</code></td></tr>
+  </table>
+
+  <div class="footer">
+    All links are public. API/web READMEs: backend/, frontend/, database/. Assumptions: admin auth on web only; optional dynamic branching beyond base spec; email filter uses question name <code>email_address</code>.
+  </div>
+</body>
+</html>

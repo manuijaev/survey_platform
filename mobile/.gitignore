@@ -1,0 +1,14 @@
+# Signing keys — never commit
+*.keystore
+*.jks
+signingKey.properties
+
+# Bubblewrap / Gradle build output
+twa/node_modules/
+twa/.gradle/
+twa/build/
+twa/app/build/
+twa/local.properties
+twa/*.apk
+twa/*.aab
+twa/*.idsig
