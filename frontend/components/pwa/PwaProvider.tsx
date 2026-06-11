@@ -1,9 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { InstallPrompt } from "@/components/pwa/InstallPrompt";
 import { OpenInAppPrompt } from "@/components/pwa/OpenInAppPrompt";
-import { markPwaInstalled, isStandaloneDisplayMode } from "@/lib/pwa/pwaStorage";
+import { PwaLaunchSplash } from "@/components/pwa/PwaLaunchSplash";
+import {
+  isStandaloneDisplayMode,
+  markPwaInstalled,
+  markPwaSplashSeenThisSession,
+  shouldShowPwaLaunchSplash
+} from "@/lib/pwa/pwaStorage";
 import { UpdateBanner } from "@/components/pwa/UpdateBanner";
 import { activateWaitingWorker, registerServiceWorker } from "@/lib/pwa/registerServiceWorker";
 import type { ReactNode } from "react";
@@ -15,11 +21,31 @@ type PwaProviderProps = {
 export function PwaProvider({ children }: PwaProviderProps) {
   const [updateReady, setUpdateReady] = useState(false);
   const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
+  const [showLaunchSplash, setShowLaunchSplash] = useState(false);
 
   useEffect(() => {
     if (isStandaloneDisplayMode()) {
       markPwaInstalled();
+      setShowLaunchSplash(shouldShowPwaLaunchSplash());
     }
+  }, []);
+
+  useEffect(() => {
+    if (!showLaunchSplash) {
+      document.body.style.overflow = "";
+      return;
+    }
+
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [showLaunchSplash]);
+
+  const completeLaunchSplash = useCallback(() => {
+    markPwaSplashSeenThisSession();
+    setShowLaunchSplash(false);
   }, []);
 
   useEffect(() => {
@@ -84,6 +110,7 @@ export function PwaProvider({ children }: PwaProviderProps) {
   return (
     <>
       {children}
+      {showLaunchSplash ? <PwaLaunchSplash onComplete={completeLaunchSplash} /> : null}
       <OpenInAppPrompt />
       <InstallPrompt />
       {updateReady ? <UpdateBanner onReload={reloadForUpdate} /> : null}

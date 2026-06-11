@@ -3,7 +3,8 @@ import {
   INSTALL_DISMISS_DAYS,
   INSTALL_DISMISS_KEY,
   INSTALL_INSTALLED_KEY,
-  INSTALL_SESSION_SEEN_KEY
+  INSTALL_SESSION_SEEN_KEY,
+  PWA_SPLASH_SEEN_KEY
 } from "@/lib/pwa/config";
 
 export function isStandaloneDisplayMode() {
@@ -77,4 +78,17 @@ export async function detectInstalledRelatedApp() {
 
 export function shouldSuppressInstallPrompt() {
   return isStandaloneDisplayMode() || isPwaMarkedInstalled() || isInstallDismissed();
+}
+
+export function isPwaSplashSeenThisSession() {
+  if (typeof window === "undefined") return true;
+  return sessionStorage.getItem(PWA_SPLASH_SEEN_KEY) === "1";
+}
+
+export function markPwaSplashSeenThisSession() {
+  sessionStorage.setItem(PWA_SPLASH_SEEN_KEY, "1");
+}
+
+export function shouldShowPwaLaunchSplash() {
+  return isStandaloneDisplayMode() && !isPwaSplashSeenThisSession();
 }

@@ -1,0 +1,92 @@
+.root {
+  background:
+    radial-gradient(circle at 50% 42%, rgba(13, 148, 136, 0.28), transparent 48%),
+    radial-gradient(circle at 20% 78%, rgba(16, 185, 129, 0.14), transparent 36%),
+    radial-gradient(circle at 80% 68%, rgba(13, 148, 136, 0.1), transparent 34%),
+    linear-gradient(180deg, #040807 0%, #060a09 45%, #030605 100%);
+}
+
+.filmGrain {
+  opacity: 0.14;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+}
+
+.logoRing {
+  position: absolute;
+  inset: -20%;
+  border-radius: 28%;
+  background: conic-gradient(
+    from 0deg,
+    rgba(13, 148, 136, 0.08),
+    rgba(16, 185, 129, 0.9),
+    rgba(13, 148, 136, 0.25),
+    rgba(16, 185, 129, 0.9),
+    rgba(13, 148, 136, 0.08)
+  );
+  animation: splashRingSpin 3.2s linear infinite;
+}
+
+.logoRingInner {
+  position: absolute;
+  inset: 3px;
+  border-radius: 26%;
+  background: #08100e;
+}
+
+.logoShine::after {
+  content: "";
+  position: absolute;
+  inset: -50% -80%;
+  background: linear-gradient(
+    115deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.45) 50%,
+    transparent 60%
+  );
+  animation: splashShine 2.2s ease-in-out 0.35s 1;
+}
+
+.particle {
+  position: absolute;
+  border-radius: 999px;
+  background: rgba(16, 185, 129, 0.9);
+  box-shadow: 0 0 14px rgba(13, 148, 136, 0.65);
+}
+
+.streak {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 140%;
+  height: 2px;
+  transform: translate(-50%, -50%) rotate(-24deg);
+  background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.7), transparent);
+  filter: blur(0.5px);
+}
+
+@keyframes splashRingSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes splashShine {
+  0% {
+    transform: translateX(-120%) rotate(12deg);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(120%) rotate(12deg);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logoRing,
+  .logoShine::after {
+    animation: none;
+  }
+}

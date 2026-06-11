@@ -11,3 +11,5 @@ export const INSTALL_INSTALLED_KEY = "skyworld-pwa-installed";
 export const INSTALL_SESSION_SEEN_KEY = "skyworld-pwa-install-seen-session";
 export const BROWSER_CONTINUE_KEY = "skyworld-pwa-browser-continue";
 export const INSTALL_DISMISS_DAYS = 14;
+export const PWA_SPLASH_SEEN_KEY = "skyworld-pwa-splash-seen-session";
+export const PWA_SPLASH_DURATION_MS = 3000;
