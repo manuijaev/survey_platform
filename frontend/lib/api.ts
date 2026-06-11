@@ -1,6 +1,10 @@
 import axios, { AxiosError, type AxiosInstance, type AxiosRequestConfig } from "axios";
 import { parseXML, buildXML, isXmlString } from "./xml";
-import { deriveResponseIdentity, parseResponseAnswers } from "./responseUtils";
+import {
+  deriveResponseIdentity,
+  parseResponseAnswers,
+  parseResponseCertificates
+} from "./responseUtils";
 import { toastService } from "./toast-service";
 import {
   ensureArray,
@@ -334,28 +338,7 @@ const toResponses = (payload: unknown): PaginatedResponses => {
     const data = item as Record<string, unknown>;
     const id = safeText(data.response_id || data["@_response_id"] || data.id);
 
-    // Certificates: <certificates><certificate id="1">filename.pdf</certificate></certificates>
-    // CertificateResponseDto uses @JacksonXmlText so fileName is the text content (#text)
-    const certsWrapper = data.certificates as Record<string, unknown> | undefined;
-    const certItems = ensureArray(
-      typeof certsWrapper === "object" && certsWrapper !== null
-        ? (certsWrapper as Record<string, unknown>).certificate ?? []
-        : []
-    );
-    const certificates = certItems
-      .filter((c) => {
-        // skip empty <certificates/> elements
-        const cert = c as Record<string, unknown>;
-        return cert["@_id"] !== undefined || cert["#text"];
-      })
-      .map((cert) => {
-        const c = cert as Record<string, unknown>;
-        return {
-          id: safeText(c["@_id"] || c.id),
-          // fileName is @JacksonXmlText — comes as #text in fast-xml-parser
-          filename: safeText(c["#text"] || c.file_name || c.fileName || c.filename)
-        };
-      });
+    const certificates = parseResponseCertificates(data.certificates);
 
     const dateResponded = safeText(data.date_responded || data.dateResponded || data.respondedAt);
 
@@ -622,7 +605,7 @@ export const surveyApi = {
     const formData = new FormData();
     // Backend expects the part named "response" (not "xmlPayload")
     formData.append("response", new Blob([xmlPayload], { type: "application/xml" }), "response.xml");
-    files.forEach((file) => formData.append("certificates[]", file));
+    files.forEach((file) => formData.append("certificates", file));
 
     return api.post(`/api/surveys/${surveyId}/responses`, formData, {
       headers: { "Content-Type": "multipart/form-data", Accept: "application/xml" },

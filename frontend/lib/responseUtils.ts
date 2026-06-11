@@ -100,7 +100,8 @@ export function slugToLabel(key: string): string {
 
 export function buildOrderedAnswerEntries(
   answers: Record<string, string>,
-  questions?: Question[]
+  questions?: Question[],
+  certificates?: SurveyResponseSummary["certificates"]
 ): AnswerDisplayEntry[] {
   const questionBySlug = new Map<string, Question>();
   for (const question of questions ?? []) {
@@ -108,17 +109,35 @@ export function buildOrderedAnswerEntries(
     if (slug) questionBySlug.set(slug, question);
   }
 
-  return Object.entries(answers)
-    .map(([key, value], index) => {
-      const question = questionBySlug.get(key);
-      return {
-        key,
-        value,
-        label: question?.text?.trim() || slugToLabel(key),
-        order: question?.order ?? 1000 + index
-      };
-    })
-    .sort((left, right) => left.order - right.order || left.label.localeCompare(right.label));
+  const entries = Object.entries(answers).map(([key, value], index) => {
+    const question = questionBySlug.get(key);
+    return {
+      key,
+      value,
+      label: question?.text?.trim() || slugToLabel(key),
+      order: question?.order ?? 1000 + index
+    };
+  });
+
+  const existingKeys = new Set(entries.map((entry) => entry.key));
+
+  // API XML omits the file-upload answer field and returns files under <certificates> only.
+  for (const question of questions ?? []) {
+    if (question.type !== "FILE_UPLOAD") continue;
+    const slug = (question.slug ?? question.id).trim();
+    if (!slug || existingKeys.has(slug)) continue;
+    if (!certificates?.length) continue;
+
+    entries.push({
+      key: slug,
+      value: certificates.map((cert) => cert.filename).join("|"),
+      label: question.text?.trim() || slugToLabel(slug),
+      order: question.order ?? 1000 + entries.length
+    });
+    existingKeys.add(slug);
+  }
+
+  return entries.sort((left, right) => left.order - right.order || left.label.localeCompare(right.label));
 }
 
 export function isIdentityAnswerKey(key: string): boolean {
@@ -142,23 +161,108 @@ export function formatAnswerPreview(value: string, questionType?: QuestionType):
   return `${files.length} files uploaded`;
 }
 
+function basename(filename: string): string {
+  const normalized = filename.trim().replace(/\\/g, "/");
+  const parts = normalized.split("/");
+  return (parts[parts.length - 1] ?? filename).trim().toLowerCase();
+}
+
+export function parseResponseCertificates(certsWrapper: unknown): SurveyResponseSummary["certificates"] {
+  if (!certsWrapper || typeof certsWrapper !== "object") return [];
+
+  const wrapper = certsWrapper as Record<string, unknown>;
+  let rawItems = ensureArray(wrapper.certificate ?? []);
+
+  if (rawItems.length === 0 && wrapper.certificates && typeof wrapper.certificates === "object") {
+    const nested = wrapper.certificates as Record<string, unknown>;
+    rawItems = ensureArray(nested.certificate ?? nested.certificates ?? []);
+  }
+
+  return rawItems
+    .map((cert) => {
+      const data = cert as Record<string, unknown>;
+      return {
+        id: safeText(data["@_id"] || data.id),
+        filename: safeXmlText(data["#text"] || data.file_name || data.fileName || data.filename)
+      };
+    })
+    .filter((cert) => cert.id || cert.filename);
+}
+
 export function findCertificateForFilename(
   filename: string,
   certificates: SurveyResponseSummary["certificates"]
 ) {
   const normalized = filename.trim().toLowerCase();
-  return certificates.find((cert) => cert.filename.trim().toLowerCase() === normalized);
+  const base = basename(filename);
+
+  return certificates.find((cert) => {
+    const certName = cert.filename.trim().toLowerCase();
+    return certName === normalized || basename(cert.filename) === base;
+  });
 }
 
-export function collectReferencedCertificateIds(response: SurveyResponseSummary): Set<string> {
+export function resolveFileUploadRows(
+  value: string,
+  certificates: SurveyResponseSummary["certificates"]
+): Array<{ filename: string; cert?: SurveyResponseSummary["certificates"][number] }> {
+  const files = splitAnswerValues(value);
+  const usedCertIds = new Set<string>();
+
+  const takeNextUnusedCert = () =>
+    certificates.find((cert) => cert.id && !usedCertIds.has(cert.id));
+
+  if (files.length === 0) {
+    return certificates.map((cert) => {
+      if (cert.id) usedCertIds.add(cert.id);
+      return { filename: cert.filename, cert };
+    });
+  }
+
+  return files.map((filename, index) => {
+    let cert = findCertificateForFilename(filename, certificates);
+    if (cert?.id) usedCertIds.add(cert.id);
+
+    if (!cert) {
+      cert = takeNextUnusedCert();
+      if (cert?.id) usedCertIds.add(cert.id);
+    }
+
+    if (!cert && certificates[index] && !usedCertIds.has(certificates[index].id)) {
+      cert = certificates[index];
+      if (cert.id) usedCertIds.add(cert.id);
+    }
+
+    return { filename, cert };
+  });
+}
+
+export function isFileUploadAnswer(
+  fieldKey: string,
+  value: string,
+  questionType?: QuestionType,
+  certificates: SurveyResponseSummary["certificates"] = []
+): boolean {
+  if (questionType === "FILE_UPLOAD") return true;
+  if (certificates.length === 0) return false;
+  if (/cert|upload|file|document|attachment/i.test(fieldKey)) return true;
+  return splitAnswerValues(value).some((part) => /\.(pdf|doc|docx|png|jpe?g)$/i.test(part));
+}
+
+export function collectReferencedCertificateIds(
+  response: SurveyResponseSummary,
+  questions?: Question[]
+): Set<string> {
   const referenced = new Set<string>();
   const answers = response.answers ?? {};
+  const entries = buildOrderedAnswerEntries(answers, questions, response.certificates);
 
-  for (const [key, value] of Object.entries(answers)) {
-    if (!value) continue;
-    for (const filename of splitAnswerValues(value)) {
-      const cert = findCertificateForFilename(filename, response.certificates);
-      if (cert) referenced.add(cert.id);
+  for (const { key, value } of entries) {
+    const question = questions?.find((item) => item.slug === key || item.id === key);
+    if (!isFileUploadAnswer(key, value, question?.type, response.certificates)) continue;
+
+    for (const row of resolveFileUploadRows(value, response.certificates)) {
+      if (row.cert?.id) referenced.add(row.cert.id);
     }
   }
 

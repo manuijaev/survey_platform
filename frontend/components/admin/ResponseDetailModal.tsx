@@ -7,11 +7,12 @@ import { createPortal } from "react-dom";
 import { TalentVaultToggle } from "@/components/admin/TalentVaultToggle";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { getAnswerAction } from "@/lib/responseAnswerActions";
+import { getAnswerAction, resolveQuestionType } from "@/lib/responseAnswerActions";
 import {
   buildOrderedAnswerEntries,
   collectReferencedCertificateIds,
-  findCertificateForFilename,
+  isFileUploadAnswer,
+  resolveFileUploadRows,
   slugToLabel,
   splitAnswerValues
 } from "@/lib/responseUtils";
@@ -182,14 +183,7 @@ function FileUploadAnswerValue({
   certificates: SurveyResponseSummary["certificates"];
   onDownloadCertificate: (cert: { id: string; filename: string }) => void;
 }) {
-  const files = splitAnswerValues(value);
-  const rows =
-    files.length > 0
-      ? files.map((filename) => ({
-          filename,
-          cert: findCertificateForFilename(filename, certificates)
-        }))
-      : certificates.map((cert) => ({ filename: cert.filename, cert }));
+  const rows = resolveFileUploadRows(value, certificates);
 
   if (rows.length === 0) {
     return <span className="text-[color:var(--text-muted)]">No files uploaded</span>;
@@ -223,7 +217,7 @@ function AnswerValue({
   certificates?: SurveyResponseSummary["certificates"];
   onDownloadCertificate?: (cert: { id: string; filename: string }) => void;
 }) {
-  if (questionType === "FILE_UPLOAD") {
+  if (isFileUploadAnswer(fieldKey, value, questionType, certificates)) {
     return (
       <FileUploadAnswerValue
         value={value}
@@ -395,8 +389,10 @@ export function ResponseDetailModal({
   if (!mounted) return null;
 
   const answers = response?.answers ?? {};
-  const answerEntries = buildOrderedAnswerEntries(answers, questions);
-  const referencedCertificateIds = response ? collectReferencedCertificateIds(response) : new Set<string>();
+  const answerEntries = buildOrderedAnswerEntries(answers, questions, response?.certificates);
+  const referencedCertificateIds = response
+    ? collectReferencedCertificateIds(response, questions)
+    : new Set<string>();
   const orphanCertificates =
     response?.certificates.filter((cert) => !referencedCertificateIds.has(cert.id)) ?? [];
 
@@ -564,7 +560,7 @@ export function ResponseDetailModal({
                           <AnswerValue
                             fieldKey={key}
                             value={value}
-                            questionType={questionTypeMap?.get(key)}
+                            questionType={resolveQuestionType(key, questionTypeMap, questions)}
                             certificates={response.certificates}
                             onDownloadCertificate={onDownloadCertificate}
                           />

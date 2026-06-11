@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -36,11 +37,14 @@ public class ResponseController {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<QuestionResponseItemDto> submitResponse(@PathVariable Long surveyId,
                                                                   @RequestPart("response") String xmlPayload,
-                                                                  @RequestPart(value = "certificates", required = false) List<MultipartFile> certificates) {
+                                                                  @RequestPart(value = "certificates", required = false) List<MultipartFile> certificates,
+                                                                  @RequestPart(value = "certificates[]", required = false) List<MultipartFile> certificatesBracket) {
         try {
             XmlMapper xmlMapper = new XmlMapper();
             QuestionResponseRequest parsed = xmlMapper.readValue(xmlPayload, QuestionResponseRequest.class);
-            return ResponseEntity.status(201).body(responseService.submitResponse(surveyId, parsed, certificates));
+            return ResponseEntity.status(201).body(
+                responseService.submitResponse(surveyId, parsed, mergeCertificateParts(certificates, certificatesBracket))
+            );
         } catch (IOException ex) {
             throw new IllegalArgumentException("Invalid response XML");
         }
@@ -65,5 +69,17 @@ public class ResponseController {
     public ResponseEntity<ShortlistStatusDto> removeFromShortlist(@PathVariable Long surveyId,
                                                                   @PathVariable Long responseId) {
         return ResponseEntity.ok(shortlistService.removeFromShortlist(surveyId, responseId));
+    }
+
+    private List<MultipartFile> mergeCertificateParts(List<MultipartFile> certificates,
+                                                      List<MultipartFile> certificatesBracket) {
+        List<MultipartFile> combined = new ArrayList<>();
+        if (certificates != null) {
+            combined.addAll(certificates);
+        }
+        if (certificatesBracket != null) {
+            combined.addAll(certificatesBracket);
+        }
+        return combined.isEmpty() ? null : combined;
     }
 }

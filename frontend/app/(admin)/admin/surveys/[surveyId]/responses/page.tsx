@@ -57,7 +57,7 @@ function ResponseCard({
   onDownloadCertificate: (cert: { id: string; filename: string }) => void;
 }) {
   const answers = response.answers ?? {};
-  const answerEntries = buildOrderedAnswerEntries(answers, questions);
+  const answerEntries = buildOrderedAnswerEntries(answers, questions, response.certificates);
   const answerCount = answerEntries.length;
   const previewEntries = answerEntries.slice(0, 4);
   const hasCerts = response.certificates.length > 0;

@@ -1,5 +1,6 @@
 import {
-  findCertificateForFilename,
+  isFileUploadAnswer,
+  resolveFileUploadRows,
   splitAnswerValues
 } from "@/lib/responseUtils";
 import type { Question, QuestionType } from "@/types/question";
@@ -90,10 +91,22 @@ function isTextLikeQuestion(questionType?: QuestionType): boolean {
 export function buildQuestionTypeMap(questions: Question[]): Map<string, QuestionType> {
   const map = new Map<string, QuestionType>();
   for (const question of questions) {
-    const slug = question.slug ?? question.id;
-    map.set(slug, question.type);
+    if (question.slug) map.set(question.slug, question.type);
+    if (question.id) map.set(question.id, question.type);
   }
   return map;
+}
+
+export function resolveQuestionType(
+  key: string,
+  questionTypeMap?: Map<string, QuestionType>,
+  questions?: Question[]
+): QuestionType | undefined {
+  const fromMap = questionTypeMap?.get(key);
+  if (fromMap) return fromMap;
+
+  const question = questions?.find((item) => item.slug === key || item.id === key);
+  return question?.type;
 }
 
 export function getAnswerAction(
@@ -176,18 +189,17 @@ export function collectResponseActions(
   for (const [key, value] of Object.entries(answers)) {
     const questionType = questionTypeMap?.get(key);
 
-    if (questionType === "FILE_UPLOAD") {
-      for (const filename of splitAnswerValues(value)) {
-        const cert = findCertificateForFilename(filename, response.certificates);
-        if (!cert) continue;
+    if (isFileUploadAnswer(key, value, questionType, response.certificates)) {
+      for (const row of resolveFileUploadRows(value, response.certificates)) {
+        if (!row.cert?.id) continue;
         push({
           kind: "download",
           key,
-          value: filename,
+          value: row.filename,
           label: "Download",
-          href: `#certificate-${cert.id}`,
-          certificateId: cert.id,
-          filename: cert.filename
+          href: `#certificate-${row.cert.id}`,
+          certificateId: row.cert.id,
+          filename: row.cert.filename
         });
       }
       continue;
