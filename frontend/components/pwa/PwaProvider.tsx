@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import { InstallPrompt } from "@/components/pwa/InstallPrompt";
 import { OpenInAppPrompt } from "@/components/pwa/OpenInAppPrompt";
 import { PwaLaunchSplash } from "@/components/pwa/PwaLaunchSplash";
@@ -18,19 +18,38 @@ type PwaProviderProps = {
   children: ReactNode;
 };
 
+type AppRevealPhase = "hidden" | "revealing" | "visible";
+
+const APP_REVEAL_MS = 920;
+
 export function PwaProvider({ children }: PwaProviderProps) {
   const [updateReady, setUpdateReady] = useState(false);
   const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
   const [showLaunchSplash, setShowLaunchSplash] = useState(false);
+  const [appRevealPhase, setAppRevealPhase] = useState<AppRevealPhase>("visible");
+  const [splashBootstrapped, setSplashBootstrapped] = useState(false);
 
-  useEffect(() => {
-    if (!isStandaloneDisplayMode()) return;
+  useLayoutEffect(() => {
+    if (!isStandaloneDisplayMode()) {
+      document.documentElement.classList.remove("pwa-splash-active", "pwa-app-reveal");
+      setAppRevealPhase("visible");
+      setSplashBootstrapped(true);
+      return;
+    }
+
     markPwaInstalled();
-    setShowLaunchSplash(shouldShowPwaLaunchSplash());
     document.documentElement.classList.add("pwa-standalone");
-    return () => {
-      document.documentElement.classList.remove("pwa-standalone");
-    };
+
+    if (shouldShowPwaLaunchSplash()) {
+      setShowLaunchSplash(true);
+      setAppRevealPhase("hidden");
+      document.documentElement.classList.add("pwa-splash-active");
+    } else {
+      document.documentElement.classList.remove("pwa-splash-active", "pwa-app-reveal");
+      setAppRevealPhase("visible");
+    }
+
+    setSplashBootstrapped(true);
   }, []);
 
   useEffect(() => {
@@ -46,8 +65,19 @@ export function PwaProvider({ children }: PwaProviderProps) {
     };
   }, [showLaunchSplash]);
 
-  const completeLaunchSplash = useCallback(() => {
+  const beginAppReveal = useCallback(() => {
     markPwaSplashSeenThisSession();
+    document.documentElement.classList.remove("pwa-splash-active");
+    document.documentElement.classList.add("pwa-app-reveal");
+    setAppRevealPhase("revealing");
+
+    window.setTimeout(() => {
+      document.documentElement.classList.remove("pwa-app-reveal");
+      setAppRevealPhase("visible");
+    }, APP_REVEAL_MS);
+  }, []);
+
+  const completeLaunchSplash = useCallback(() => {
     setShowLaunchSplash(false);
   }, []);
 
@@ -110,12 +140,22 @@ export function PwaProvider({ children }: PwaProviderProps) {
     window.location.reload();
   };
 
+  const chromeReady = splashBootstrapped && !showLaunchSplash;
+
   return (
     <>
-      {children}
-      {showLaunchSplash ? <PwaLaunchSplash onComplete={completeLaunchSplash} /> : null}
-      <OpenInAppPrompt />
-      <InstallPrompt />
+      <div
+        id="pwa-app-root"
+        aria-hidden={appRevealPhase === "hidden"}
+        style={appRevealPhase === "hidden" ? { opacity: 0, visibility: "hidden" } : undefined}
+      >
+        {children}
+      </div>
+      {showLaunchSplash ? (
+        <PwaLaunchSplash onHandoff={beginAppReveal} onComplete={completeLaunchSplash} />
+      ) : null}
+      {chromeReady ? <OpenInAppPrompt /> : null}
+      {chromeReady ? <InstallPrompt /> : null}
       {updateReady ? <UpdateBanner onReload={reloadForUpdate} /> : null}
     </>
   );

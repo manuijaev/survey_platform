@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { PWA_SHORT_NAME, PWA_SPLASH_DURATION_MS } from "@/lib/pwa/config";
 import styles from "./PwaLaunchSplash.module.css";
@@ -91,37 +91,47 @@ const titleChar = {
   }
 };
 
-export function PwaLaunchSplash({ onComplete }: { onComplete: () => void }) {
+type PwaLaunchSplashProps = {
+  onHandoff: () => void;
+  onComplete: () => void;
+};
+
+export function PwaLaunchSplash({ onHandoff, onComplete }: PwaLaunchSplashProps) {
   const reduceMotion = useReducedMotion();
-  const [mounted, setMounted] = useState(false);
+  const [mounted] = useState(() => typeof document !== "undefined");
   const [visible, setVisible] = useState(true);
+  const handoffRef = useRef(onHandoff);
+  const completeRef = useRef(onComplete);
   const particles = useMemo(() => buildParticles(40), []);
   const sparks = useMemo(() => buildSparks(8), []);
   const titleChars = useMemo(() => PWA_SHORT_NAME.split(""), []);
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
+    handoffRef.current = onHandoff;
+    completeRef.current = onComplete;
+  }, [onComplete, onHandoff]);
 
   useEffect(() => {
     const totalMs = reduceMotion ? 520 : PWA_SPLASH_DURATION_MS;
-    const fadeOutMs = reduceMotion ? 180 : 580;
+    const fadeOutMs = reduceMotion ? 180 : 620;
+    const handoffMs = totalMs - fadeOutMs;
 
-    const fadeTimer = window.setTimeout(() => setVisible(false), totalMs - fadeOutMs);
-    const doneTimer = window.setTimeout(onComplete, totalMs);
+    const handoffTimer = window.setTimeout(() => {
+      handoffRef.current();
+      setVisible(false);
+    }, handoffMs);
 
     return () => {
-      window.clearTimeout(fadeTimer);
-      window.clearTimeout(doneTimer);
+      window.clearTimeout(handoffTimer);
     };
-  }, [onComplete, reduceMotion]);
+  }, [reduceMotion]);
 
   if (!mounted) {
     return null;
   }
 
   const content = (
-    <AnimatePresence>
+    <AnimatePresence onExitComplete={() => completeRef.current()}>
       {visible ? (
         <motion.div
           key="pwa-launch-splash"
@@ -129,9 +139,9 @@ export function PwaLaunchSplash({ onComplete }: { onComplete: () => void }) {
           initial={{ opacity: 1 }}
           exit={{
             opacity: 0,
-            scale: 1.03,
-            filter: "blur(12px)",
-            transition: { duration: reduceMotion ? 0.18 : 0.58, ease: easeSmooth }
+            scale: 1.02,
+            filter: "blur(10px)",
+            transition: { duration: reduceMotion ? 0.2 : 0.68, ease: easeSmooth }
           }}
         >
           <motion.div

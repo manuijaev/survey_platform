@@ -6,6 +6,7 @@ import {
   PWA_SHORT_NAME,
   PWA_THEME_COLOR
 } from "@/lib/pwa/config";
+import { PWA_SPLASH_GATE_SCRIPT } from "@/lib/pwa/splashGateScript";
 import "./globals.css";
 import type { ReactNode } from "react";
 
@@ -46,6 +47,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
   return (
     <html lang="en" suppressHydrationWarning>
       <body suppressHydrationWarning>
+        <script dangerouslySetInnerHTML={{ __html: PWA_SPLASH_GATE_SCRIPT }} />
         <AppProviders>{children}</AppProviders>
       </body>
     </html>

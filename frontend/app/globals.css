@@ -372,6 +372,55 @@ select {
   padding-top: 1rem;
 }
 
+html.pwa-splash-active {
+  background: #030605;
+}
+
+html.pwa-splash-active body {
+  overflow: hidden;
+  background: #030605;
+}
+
+html.pwa-splash-active #pwa-app-root {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+html.pwa-app-reveal #pwa-app-root {
+  animation: pwaAppReveal 0.92s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes pwaAppReveal {
+  from {
+    opacity: 0;
+    transform: scale(1.018);
+    filter: blur(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.pwa-app-reveal #pwa-app-root {
+    animation: pwaAppRevealReduced 0.32s ease forwards;
+  }
+
+  @keyframes pwaAppRevealReduced {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+}
+
 @media (max-width: 768px) {
   .mobile-full-bleed {
     width: 100vw;
