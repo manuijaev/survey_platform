@@ -166,6 +166,37 @@ const toOption = (value: unknown): QuestionOption => {
 const questionXmlId = (data: Record<string, unknown>) =>
   safeText(data["@_id"] ?? data.id ?? data.questionId);
 
+const parseQuestionFileProperties = (fileProps?: Record<string, unknown>) => {
+  if (!fileProps) {
+    return {
+      fileFormat: undefined as string | undefined,
+      maxFileSizeMb: undefined as number | undefined,
+      multipleFiles: false
+    };
+  }
+
+  const maxFileSizeRaw =
+    fileProps["@_max_file_size"] ??
+    fileProps.max_file_size ??
+    fileProps.max_file_size_mb ??
+    fileProps.maxFileSize ??
+    fileProps.maxFileSizeMb;
+
+  return {
+    fileFormat:
+      safeText(
+        fileProps["@_format"] || fileProps.format || fileProps.fileFormat || fileProps.file_format
+      ) || undefined,
+    maxFileSizeMb:
+      maxFileSizeRaw !== undefined && maxFileSizeRaw !== null && maxFileSizeRaw !== ""
+        ? toNumber(maxFileSizeRaw, 1)
+        : undefined,
+    multipleFiles: toBoolean(
+      fileProps["@_multiple"] ?? fileProps.multiple ?? fileProps.multiple_files ?? fileProps.multipleFiles
+    )
+  };
+};
+
 const toQuestion = (payload: Record<string, unknown>): Question => {
   const question = payload.question ?? payload;
   const data = question as Record<string, unknown>;
@@ -175,6 +206,7 @@ const toQuestion = (payload: Record<string, unknown>): Question => {
   const optionsSource = optionsWrapper?.option ?? data.option ?? data.choices ?? [];
   // File properties may come as <file_properties> element (snake_case from backend)
   const fileProps = (data.file_properties ?? data.fileProperties) as Record<string, unknown> | undefined;
+  const parsedFileProps = parseQuestionFileProperties(fileProps);
   const slug = safeText(data["@_name"] || data.name || data.slug) || slugify(safeText(data.text)) || undefined;
 
   return {
@@ -188,17 +220,13 @@ const toQuestion = (payload: Record<string, unknown>): Question => {
     order: toNumber(data.order || data.position || data["@_orderIndex"] || data.order_index, 0),
     options: ensureArray(optionsSource).map(toOption),
     allowMultipleSelections: toBoolean(multipleAttr ?? data.allowMultipleSelections ?? data.multiple),
-    fileFormat: fileProps
-      ? safeText(fileProps.format || fileProps.fileFormat || fileProps.file_format) || undefined
-      : safeText(data.fileFormat || data.file_format) || undefined,
+    fileFormat:
+      parsedFileProps.fileFormat || safeText(data.fileFormat || data.file_format) || undefined,
     maxFileSizeMb:
-      fileProps && fileProps.maxFileSize !== undefined
-        ? toNumber(fileProps.maxFileSize || fileProps.max_file_size_mb, 1)
-        : data.maxFileSizeMb !== undefined
-          ? toNumber(data.maxFileSizeMb, 1)
-          : undefined,
+      parsedFileProps.maxFileSizeMb ??
+      (data.maxFileSizeMb !== undefined ? toNumber(data.maxFileSizeMb, 1) : undefined),
     multipleFiles: fileProps
-      ? toBoolean(fileProps.multiple ?? fileProps.multipleFiles ?? fileProps.multiple_files)
+      ? parsedFileProps.multipleFiles
       : toBoolean(data.multipleFiles || data.multiple_files),
     minNumber:
       data.min_number !== undefined
@@ -525,6 +553,9 @@ export const surveyApi = {
     const optionsWrapper = questionData.options as Record<string, unknown> | undefined;
     const multipleAttr = optionsWrapper?.["@_multiple"] ?? optionsWrapper?.multiple;
     const optionItems = ensureArray(optionsWrapper?.option ?? questionData.option ?? []);
+    const nextFileProps = parseQuestionFileProperties(
+      (questionData.file_properties ?? questionData.fileProperties) as Record<string, unknown> | undefined
+    );
 
     return {
       surveyComplete,
@@ -544,9 +575,15 @@ export const surveyApi = {
           };
         }),
         allowMultipleSelections: toBoolean(multipleAttr ?? questionData.allowMultipleSelections),
-        fileFormat: safeText(questionData.fileFormat || questionData.file_format) || undefined,
-        maxFileSizeMb: questionData.maxFileSizeMb ? toNumber(questionData.maxFileSizeMb, 1) : undefined,
-        multipleFiles: toBoolean(questionData.multipleFiles || questionData.multiple_files),
+        fileFormat:
+          nextFileProps.fileFormat || safeText(questionData.fileFormat || questionData.file_format) || undefined,
+        maxFileSizeMb:
+          nextFileProps.maxFileSizeMb ??
+          (questionData.maxFileSizeMb ? toNumber(questionData.maxFileSizeMb, 1) : undefined),
+        multipleFiles:
+          questionData.file_properties || questionData.fileProperties
+            ? nextFileProps.multipleFiles
+            : toBoolean(questionData.multipleFiles || questionData.multiple_files),
         minNumber:
           questionData.min_number !== undefined
             ? toNumber(questionData.min_number)

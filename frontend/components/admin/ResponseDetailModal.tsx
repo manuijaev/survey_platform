@@ -8,7 +8,13 @@ import { TalentVaultToggle } from "@/components/admin/TalentVaultToggle";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { getAnswerAction } from "@/lib/responseAnswerActions";
-import { buildOrderedAnswerEntries, slugToLabel } from "@/lib/responseUtils";
+import {
+  buildOrderedAnswerEntries,
+  collectReferencedCertificateIds,
+  findCertificateForFilename,
+  slugToLabel,
+  splitAnswerValues
+} from "@/lib/responseUtils";
 import { cn, formatDateTime } from "@/lib/utils";
 import type { Question, QuestionType } from "@/types/question";
 import type { SurveyResponseSummary } from "@/types/survey";
@@ -129,21 +135,108 @@ function AnswerActionButton({
   );
 }
 
+function FileUploadAnswerValue({
+  value,
+  certificates,
+  onDownloadCertificate
+}: {
+  value: string;
+  certificates: SurveyResponseSummary["certificates"];
+  onDownloadCertificate: (cert: { id: string; filename: string }) => void;
+}) {
+  const files = splitAnswerValues(value);
+
+  if (files.length === 0) {
+    if (certificates.length > 0) {
+      return (
+        <div className="space-y-2 pt-1">
+          {certificates.map((cert) => (
+            <button
+              key={cert.id}
+              type="button"
+              onClick={() => onDownloadCertificate(cert)}
+              className="focus-ring flex w-full items-center gap-3 rounded-xl border border-[color:var(--border)] bg-[color:var(--bg-elevated)] px-3 py-2 text-left transition hover:border-[color:var(--primary)]"
+            >
+              <FileText className="h-4 w-4 shrink-0 text-[color:var(--primary)]" />
+              <span className="min-w-0 flex-1 truncate text-sm text-[color:var(--text-primary)]">
+                {cert.filename}
+              </span>
+              <Download className="h-4 w-4 shrink-0 text-[color:var(--primary)]" />
+            </button>
+          ))}
+        </div>
+      );
+    }
+    return <span className="text-[color:var(--text-muted)]">No files uploaded</span>;
+  }
+
+  return (
+    <div className="space-y-2 pt-1">
+      {files.map((filename) => {
+        const cert = findCertificateForFilename(filename, certificates);
+        if (cert) {
+          return (
+            <button
+              key={`${cert.id}-${filename}`}
+              type="button"
+              onClick={() => onDownloadCertificate(cert)}
+              className="focus-ring flex w-full items-center gap-3 rounded-xl border border-[color:var(--border)] bg-[color:var(--bg-elevated)] px-3 py-2 text-left transition hover:border-[color:var(--primary)]"
+            >
+              <FileText className="h-4 w-4 shrink-0 text-[color:var(--primary)]" />
+              <span className="min-w-0 flex-1 truncate text-sm text-[color:var(--text-primary)]">
+                {filename}
+              </span>
+              <Download className="h-4 w-4 shrink-0 text-[color:var(--primary)]" />
+            </button>
+          );
+        }
+
+        return (
+          <div
+            key={filename}
+            className="flex items-center gap-3 rounded-xl border border-[color:var(--border)] bg-[color:var(--bg-elevated)] px-3 py-2"
+          >
+            <FileText className="h-4 w-4 shrink-0 text-[color:var(--text-muted)]" />
+            <span className="min-w-0 flex-1 truncate text-sm text-[color:var(--text-primary)]">
+              {filename}
+            </span>
+            <span className="text-xs text-[color:var(--text-muted)]">Uploaded</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // Format pipe-separated multi-choice answers as tags
 function AnswerValue({
   fieldKey,
   value,
-  questionType
+  questionType,
+  certificates = [],
+  onDownloadCertificate
 }: {
   fieldKey: string;
   value: string;
   questionType?: QuestionType;
+  certificates?: SurveyResponseSummary["certificates"];
+  onDownloadCertificate?: (cert: { id: string; filename: string }) => void;
 }) {
+  if (questionType === "FILE_UPLOAD") {
+    return (
+      <FileUploadAnswerValue
+        value={value}
+        certificates={certificates}
+        onDownloadCertificate={onDownloadCertificate ?? (() => undefined)}
+      />
+    );
+  }
+
   if (!value || value === "") {
     return <span className="text-[color:var(--text-muted)]">—</span>;
   }
 
-  const parts = value.split("|").map((s) => s.trim()).filter(Boolean);
+  const parts = splitAnswerValues(value);
   if (parts.length > 1) {
     return (
       <div className="flex flex-wrap gap-2 pt-1">
@@ -296,6 +389,9 @@ export function ResponseDetailModal({
 
   const answers = response?.answers ?? {};
   const answerEntries = buildOrderedAnswerEntries(answers, questions);
+  const referencedCertificateIds = response ? collectReferencedCertificateIds(response) : new Set<string>();
+  const orphanCertificates =
+    response?.certificates.filter((cert) => !referencedCertificateIds.has(cert.id)) ?? [];
 
   const motionPanel = reduceMotion
     ? { initial: false, animate: { opacity: 1 }, exit: { opacity: 0 } }
@@ -462,6 +558,8 @@ export function ResponseDetailModal({
                             fieldKey={key}
                             value={value}
                             questionType={questionTypeMap?.get(key)}
+                            certificates={response.certificates}
+                            onDownloadCertificate={onDownloadCertificate}
                           />
                         </div>
                       </motion.div>
@@ -472,8 +570,8 @@ export function ResponseDetailModal({
                 </div>
               </div>
 
-              {/* Certificates */}
-              {response.certificates.length > 0 ? (
+              {/* Certificates not linked to a file-upload answer field */}
+              {orphanCertificates.length > 0 ? (
                 <div>
                   <motion.p
                     className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)]"
@@ -482,10 +580,10 @@ export function ResponseDetailModal({
                     initial={reduceMotion ? false : "hidden"}
                     animate={reduceMotion ? undefined : "visible"}
                   >
-                    Uploaded Documents
+                    Additional Documents
                   </motion.p>
                   <div className="space-y-2">
-                    {response.certificates.map((cert, i) => (
+                    {orphanCertificates.map((cert, i) => (
                       <motion.button
                         key={cert.id}
                         type="button"

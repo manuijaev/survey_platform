@@ -1,6 +1,7 @@
 import { safeXmlText } from "./xml";
 import { ensureArray, safeText } from "./utils";
-import type { Question } from "@/types/question";
+import type { Question, QuestionType } from "@/types/question";
+import type { SurveyResponseSummary } from "@/types/survey";
 
 const NAME_KEY_PATTERN = /(^|_)(full_?name|candidate_?name|your_?name|applicant_?name|name)(_|$)/i;
 const EMAIL_KEY_PATTERN = /(^|_)(email|e_mail|email_address)(_|$)/i;
@@ -122,4 +123,44 @@ export function buildOrderedAnswerEntries(
 
 export function isIdentityAnswerKey(key: string): boolean {
   return NAME_KEY_PATTERN.test(key) || EMAIL_KEY_PATTERN.test(key);
+}
+
+export function splitAnswerValues(value: string): string[] {
+  return value
+    .split("|")
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+export function formatAnswerPreview(value: string, questionType?: QuestionType): string {
+  if (!value) return "—";
+  if (questionType !== "FILE_UPLOAD") return value;
+
+  const files = splitAnswerValues(value);
+  if (files.length === 0) return "No files uploaded";
+  if (files.length === 1) return files[0];
+  return `${files.length} files uploaded`;
+}
+
+export function findCertificateForFilename(
+  filename: string,
+  certificates: SurveyResponseSummary["certificates"]
+) {
+  const normalized = filename.trim().toLowerCase();
+  return certificates.find((cert) => cert.filename.trim().toLowerCase() === normalized);
+}
+
+export function collectReferencedCertificateIds(response: SurveyResponseSummary): Set<string> {
+  const referenced = new Set<string>();
+  const answers = response.answers ?? {};
+
+  for (const [key, value] of Object.entries(answers)) {
+    if (!value) continue;
+    for (const filename of splitAnswerValues(value)) {
+      const cert = findCertificateForFilename(filename, response.certificates);
+      if (cert) referenced.add(cert.id);
+    }
+  }
+
+  return referenced;
 }

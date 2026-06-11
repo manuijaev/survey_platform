@@ -28,7 +28,10 @@ export const questionSchema = z
     options: z.array(optionSchema).default([]),
     allowMultipleSelections: z.boolean().default(false),
     fileFormat: z.string().trim().optional().or(z.literal("")),
-    maxFileSizeMb: z.coerce.number().min(1).max(100).optional(),
+    maxFileSizeMb: z.preprocess(
+      (value) => (value === "" || value === undefined || Number.isNaN(value) ? undefined : value),
+      z.coerce.number().min(1).max(100).optional()
+    ),
     multipleFiles: z.boolean().default(false),
     minNumber: z.coerce.number().optional(),
     maxNumber: z.coerce.number().optional()
@@ -37,7 +40,11 @@ export const questionSchema = z
     if (value.type !== "FILE_UPLOAD") {
       return { ...value, fileFormat: "", maxFileSizeMb: undefined, multipleFiles: false };
     }
-    return value;
+    return {
+      ...value,
+      fileFormat: value.fileFormat?.trim() || ".pdf",
+      maxFileSizeMb: value.maxFileSizeMb ?? 1
+    };
   })
   .superRefine((value, ctx) => {
     const needsOptions = value.type === "SINGLE_CHOICE" || value.type === "MULTIPLE_CHOICE";

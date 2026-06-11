@@ -54,6 +54,7 @@ export function QuestionEditor({
   onSave: (payload: QuestionPayload) => Promise<void> | void;
 }) {
   const autoSlugRef = useRef("");
+  const previousTypeRef = useRef<QuestionType | null>(null);
   const {
     register,
     control,
@@ -82,14 +83,33 @@ export function QuestionEditor({
   const isSystemDesign = type === "SYSTEM_DESIGN";
 
   useEffect(() => {
-    if (type !== "FILE_UPLOAD") {
+    const previousType = previousTypeRef.current;
+    previousTypeRef.current = type;
+
+    if (type === "FILE_UPLOAD") {
+      if (!getValues("fileFormat")?.trim()) {
+        setValue("fileFormat", ".pdf", { shouldValidate: true });
+      }
+      const currentMax = getValues("maxFileSizeMb");
+      if (currentMax === undefined || Number.isNaN(currentMax)) {
+        setValue("maxFileSizeMb", 1, { shouldValidate: true });
+      }
+      return;
+    }
+
+    if (previousType === "FILE_UPLOAD") {
       setValue("fileFormat", "");
       setValue("maxFileSizeMb", undefined);
       setValue("multipleFiles", false);
     }
-  }, [type, setValue]);
+  }, [type, setValue, getValues]);
 
   useEffect(() => {
+    if (!open) {
+      previousTypeRef.current = null;
+      return;
+    }
+
     if (initialQuestion) {
       const nextValues: QuestionFormValues = {
         name: initialQuestion.slug ?? initialQuestion.id,
@@ -117,7 +137,7 @@ export function QuestionEditor({
 
     autoSlugRef.current = "";
     reset(defaultValues);
-  }, [initialQuestion, reset, open]);
+  }, [initialQuestion, open, reset]);
 
   const title = initialQuestion ? "Edit Question" : "Add Question";
 
@@ -245,7 +265,9 @@ export function QuestionEditor({
                 label="Max file size"
                 type="number"
                 min={1}
+                max={100}
                 step={1}
+                suffix="MB"
                 {...register("maxFileSizeMb", { valueAsNumber: true })}
                 error={errors.maxFileSizeMb?.message}
               />

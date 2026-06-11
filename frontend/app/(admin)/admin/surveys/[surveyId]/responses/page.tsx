@@ -25,7 +25,11 @@ import { ResponseAnswerActions } from "@/components/admin/ResponseAnswerActions"
 import { ResponseDetailModal } from "@/components/admin/ResponseDetailModal";
 import { useQuestions, useResponses, useResponsesActions, useSurvey, useTalentVault } from "@/lib/hooks";
 import { buildQuestionTypeMap, collectResponseActions } from "@/lib/responseAnswerActions";
-import { buildOrderedAnswerEntries, deriveResponseIdentity } from "@/lib/responseUtils";
+import {
+  buildOrderedAnswerEntries,
+  deriveResponseIdentity,
+  formatAnswerPreview
+} from "@/lib/responseUtils";
 import { cn, formatDateTime, formatRelativeTime, truncate } from "@/lib/utils";
 import type { Question, QuestionType } from "@/types/question";
 import type { SurveyResponseSummary } from "@/types/survey";
@@ -130,16 +134,19 @@ function ResponseCard({
               {/* Answer preview chips */}
               {answerCount > 0 ? (
                 <div className="mt-3 flex flex-wrap gap-1.5">
-                  {previewEntries.map(({ key, label, value }) => (
+                  {previewEntries.map(({ key, label, value }) => {
+                    const preview = formatAnswerPreview(value, questionTypeMap?.get(key));
+                    return (
                       <span
                         key={key}
                         className="max-w-full truncate rounded-full border border-[color:var(--border)] bg-[color:var(--bg-elevated)] px-2.5 py-0.5 text-[11px] text-[color:var(--text-secondary)] sm:max-w-[18rem]"
-                        title={`${label}: ${value}`}
+                        title={`${label}: ${preview}`}
                       >
                         <span className="font-medium text-[color:var(--text-muted)]">{label}:</span>{" "}
-                        {truncate(value || "—", 42)}
+                        {truncate(preview || "—", 42)}
                       </span>
-                    ))}
+                    );
+                  })}
                   {answerCount > 4 ? (
                     <span className="rounded-full border border-[color:var(--border)] bg-[color:var(--bg-elevated)] px-2.5 py-0.5 font-mono text-[11px] text-[color:var(--text-muted)]">
                       +{answerCount - 4} more
