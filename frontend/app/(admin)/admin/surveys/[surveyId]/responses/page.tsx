@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import {
@@ -15,6 +15,7 @@ import {
   Bookmark,
   Inbox
 } from "lucide-react";
+import { SurveySelector } from "@/components/admin/SurveySelector";
 import { TalentVaultToggle } from "@/components/admin/TalentVaultToggle";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -23,7 +24,7 @@ import { Input } from "@/components/ui/Input";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { ResponseAnswerActions } from "@/components/admin/ResponseAnswerActions";
 import { ResponseDetailModal } from "@/components/admin/ResponseDetailModal";
-import { useQuestions, useResponses, useResponsesActions, useSurvey, useTalentVault } from "@/lib/hooks";
+import { useQuestions, useResponses, useResponsesActions, useSurvey, useSurveys, useTalentVault } from "@/lib/hooks";
 import { buildQuestionTypeMap, collectResponseActions } from "@/lib/responseAnswerActions";
 import {
   buildOrderedAnswerEntries,
@@ -208,8 +209,10 @@ function ResponseCardSkeleton() {
 
 export default function SurveyResponsesPage() {
   const params = useParams<{ surveyId: string }>();
+  const router = useRouter();
   const surveyId = params.surveyId;
   const surveyQuery = useSurvey(surveyId);
+  const surveysQuery = useSurveys();
   const questionsQuery = useQuestions(surveyId);
   const questionTypeMap = useMemo(
     () => buildQuestionTypeMap(questionsQuery.data ?? []),
@@ -288,7 +291,7 @@ export default function SurveyResponsesPage() {
       {/* Breadcrumb + heading */}
       <div className="mb-8 space-y-4">
         <div className="truncate text-sm uppercase tracking-[0.24em] text-[color:var(--text-muted)]">
-          <Link href="/admin/surveys" className="transition hover:text-[color:var(--text-primary)]">Surveys</Link>
+          <Link href="/admin/responses" className="transition hover:text-[color:var(--text-primary)]">Responses</Link>
           <span className="mx-2">/</span>
           <Link
             href={`/surveys/${surveyId}`}
@@ -310,7 +313,14 @@ export default function SurveyResponsesPage() {
               Review submissions, save standout candidates to your talent vault, and return to them anytime.
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-3">
+          <SurveySelector
+            surveys={surveysQuery.data ?? []}
+            value={surveyId}
+            onChange={(nextSurveyId) => router.push(`/admin/surveys/${nextSurveyId}/responses`)}
+          />
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
             <span className="flex items-center gap-2 rounded-2xl border border-[color:var(--border)] bg-[color:var(--bg-surface)] px-4 py-2 font-mono text-sm text-[color:var(--text-primary)]">
               <Users className="h-4 w-4 text-[color:var(--primary)]" />
               {view === "vault" ? vaultCount : totalCount}{" "}
@@ -324,7 +334,6 @@ export default function SurveyResponsesPage() {
                 {vaultCount} in vault
               </span>
             ) : null}
-          </div>
         </div>
       </div>
 

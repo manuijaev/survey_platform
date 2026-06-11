@@ -11,6 +11,7 @@ import {
   type QuestionManagementSection,
   type QuestionTab
 } from "@/components/questions/QuestionManagementSidebar";
+import { SurveySelector } from "@/components/admin/SurveySelector";
 import { useSurvey, useSurveys } from "@/lib/hooks";
 
 export default function QuestionManagementPage() {
@@ -50,8 +51,8 @@ export default function QuestionManagementPage() {
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
       <div className="mb-8 space-y-4">
         <div className="truncate text-sm uppercase tracking-[0.24em] text-[color:var(--text-muted)]">
-          <Link href="/admin/surveys" className="transition hover:text-[color:var(--text-primary)]">
-            Surveys
+          <Link href="/admin/questions" className="transition hover:text-[color:var(--text-primary)]">
+            Questions
           </Link>
           <span className="mx-2 text-[color:var(--text-muted)]">/</span>
           <Link
@@ -72,26 +73,14 @@ export default function QuestionManagementPage() {
               Manage all survey questions, create custom branching targets, and configure adaptive paths.
             </p>
           </div>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <label className="text-sm text-[color:var(--text-secondary)]" htmlFor="survey-selector">
-              Survey
-            </label>
-            <select
-              id="survey-selector"
-              className="focus-ring h-11 w-full min-w-0 rounded-xl border border-[color:var(--border)] bg-[color:var(--bg-surface)] px-4 text-sm text-[color:var(--text-primary)] sm:min-w-[220px] sm:w-auto"
-              value={surveyId}
-              onChange={(event) => {
-                const tab = activeSection === "branching" ? "branching" : questionTab;
-                router.push(`/admin/surveys/${event.target.value}/questions?tab=${tab}`);
-              }}
-            >
-              {(surveysQuery.data ?? []).map((survey) => (
-                <option key={survey.id} value={survey.id}>
-                  {survey.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          <SurveySelector
+            surveys={surveysQuery.data ?? []}
+            value={surveyId}
+            onChange={(nextSurveyId) => {
+              const tab = activeSection === "branching" ? "branching" : questionTab;
+              router.push(`/admin/surveys/${nextSurveyId}/questions?tab=${tab}`);
+            }}
+          />
         </div>
       </div>
 

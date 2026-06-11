@@ -376,8 +376,8 @@ const toResponses = (payload: unknown): PaginatedResponses => {
 
 export const surveyApi = {
   getSurveys: async () => toSurveys(await requestXml<unknown>({ url: "/api/surveys", method: "GET" })),
-  createSurvey: async (payload: SurveyPayload) =>
-    requestXml<unknown>({
+  createSurvey: async (payload: SurveyPayload) => {
+    const response = await requestXml<unknown>({
       url: "/api/surveys",
       method: "POST",
       data: buildXML({
@@ -386,7 +386,9 @@ export const surveyApi = {
           description: payload.description ?? ""
         }
       })
-    }),
+    });
+    return toSurvey(parsePayload<Record<string, unknown>>(response));
+  },
   updateSurvey: async (id: string, payload: SurveyPayload) =>
     requestXml<unknown>({
       url: `/api/surveys/${id}`,

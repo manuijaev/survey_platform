@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useParams, usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { BarChart3, FileText, ListChecks, LogOut, ScrollText, Waves } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import { toastService } from "@/lib/toast-service";
@@ -11,15 +11,32 @@ import type { ReactNode } from "react";
 
 const primaryNav = [
   { href: "/admin/surveys", label: "Surveys", icon: Waves },
-  { href: "questions", label: "Questions", icon: ListChecks },
-  { href: "responses", label: "Responses", icon: BarChart3 }
-];
+  { href: "/admin/questions", label: "Questions", icon: ListChecks },
+  { href: "/admin/responses", label: "Responses", icon: BarChart3 }
+] as const;
+
+function getSurveyIdFromPath(pathname: string) {
+  const match = pathname.match(/\/admin\/surveys\/([^/]+)\/(questions|responses)/);
+  return match?.[1];
+}
+
+function isNavActive(pathname: string, href: string) {
+  if (href === "/admin/surveys") {
+    return pathname === "/admin/surveys";
+  }
+  if (href === "/admin/questions") {
+    return pathname.startsWith("/admin/questions") || /\/surveys\/[^/]+\/questions/.test(pathname);
+  }
+  if (href === "/admin/responses") {
+    return pathname.startsWith("/admin/responses") || /\/surveys\/[^/]+\/responses/.test(pathname);
+  }
+  return pathname.startsWith(href);
+}
 
 export function AdminShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const params = useParams<{ surveyId?: string }>();
-  const surveyId = params.surveyId;
+  const surveyId = useMemo(() => getSurveyIdFromPath(pathname), [pathname]);
   const [loggingOut, setLoggingOut] = useState(false);
 
   const handleLogout = async () => {
@@ -34,12 +51,6 @@ export function AdminShell({ children }: { children: ReactNode }) {
     } finally {
       setLoggingOut(false);
     }
-  };
-
-  const buildHref = (segment: string) => {
-    if (segment === "/admin/surveys") return segment;
-    if (!surveyId) return "/admin/surveys";
-    return `/admin/surveys/${surveyId}/${segment}`;
   };
 
   return (
@@ -61,20 +72,16 @@ export function AdminShell({ children }: { children: ReactNode }) {
         <nav className="space-y-2">
           {primaryNav.map((item) => {
             const Icon = item.icon;
-            const href = buildHref(item.href);
-            const active = pathname.startsWith(href);
-            const disabled = item.href !== "/admin/surveys" && !surveyId;
+            const active = isNavActive(pathname, item.href);
             return (
               <Link
                 key={item.label}
-                href={href}
-                aria-disabled={disabled}
+                href={item.href}
                 className={cn(
                   "focus-ring flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm transition",
                   active
                     ? "border-[color:var(--border-active)] bg-[rgba(13,148,136,0.14)] text-[color:var(--text-primary)] shadow-[0_0_22px_rgba(13,148,136,0.12)]"
-                    : "border-transparent bg-transparent text-[color:var(--text-secondary)] hover:border-[color:var(--border)] hover:bg-[color:var(--bg-subtle)] hover:text-[color:var(--text-primary)]",
-                  disabled && "pointer-events-none opacity-50"
+                    : "border-transparent bg-transparent text-[color:var(--text-secondary)] hover:border-[color:var(--border)] hover:bg-[color:var(--bg-subtle)] hover:text-[color:var(--text-primary)]"
                 )}
               >
                 <Icon className="h-4 w-4" />
@@ -86,7 +93,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
         {surveyId ? (
           <div className="mt-8 rounded-2xl border border-[color:var(--border)] bg-[color:var(--bg-surface)] p-4">
-            <div className="text-xs uppercase tracking-[0.2em] text-[color:var(--text-muted)]">Selected survey</div>
+            <div className="text-xs uppercase tracking-[0.2em] text-[color:var(--text-muted)]">Active survey</div>
             <div className="mt-2 font-mono text-sm text-[color:var(--text-primary)]">{surveyId}</div>
           </div>
         ) : null}
@@ -137,38 +144,32 @@ export function AdminShell({ children }: { children: ReactNode }) {
           </div>
         </div>
 
-        {surveyId ? (
-          <nav
-            className="sticky top-0 z-30 border-b border-[color:var(--border)] bg-[rgba(6,10,9,0.88)] px-2 py-2 backdrop-blur-xl lg:hidden"
-            aria-label="Survey admin navigation"
-          >
-            <div className="flex gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {primaryNav.map((item) => {
-                const Icon = item.icon;
-                const href = buildHref(item.href);
-                const active = pathname.startsWith(href);
-                const disabled = item.href !== "/admin/surveys" && !surveyId;
-                return (
-                  <Link
-                    key={item.label}
-                    href={href}
-                    aria-disabled={disabled}
-                    className={cn(
-                      "focus-ring inline-flex min-h-11 shrink-0 items-center gap-2 rounded-2xl border px-4 py-2.5 text-sm font-medium transition",
-                      active
-                        ? "border-[color:var(--border-active)] bg-[rgba(13,148,136,0.14)] text-[color:var(--text-primary)]"
-                        : "border-[color:var(--border)] bg-[color:var(--bg-surface)] text-[color:var(--text-secondary)]",
-                      disabled && "pointer-events-none opacity-50"
-                    )}
-                  >
-                    <Icon className="h-4 w-4 shrink-0" />
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </div>
-          </nav>
-        ) : null}
+        <nav
+          className="sticky top-0 z-30 border-b border-[color:var(--border)] bg-[rgba(6,10,9,0.88)] px-2 py-2 backdrop-blur-xl lg:hidden"
+          aria-label="Admin navigation"
+        >
+          <div className="flex gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {primaryNav.map((item) => {
+              const Icon = item.icon;
+              const active = isNavActive(pathname, item.href);
+              return (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  className={cn(
+                    "focus-ring inline-flex min-h-11 shrink-0 items-center gap-2 rounded-2xl border px-4 py-2.5 text-sm font-medium transition",
+                    active
+                      ? "border-[color:var(--border-active)] bg-[rgba(13,148,136,0.14)] text-[color:var(--text-primary)]"
+                      : "border-[color:var(--border)] bg-[color:var(--bg-surface)] text-[color:var(--text-secondary)]"
+                  )}
+                >
+                  <Icon className="h-4 w-4 shrink-0" />
+                  {item.label}
+                </Link>
+              );
+            })}
+          </div>
+        </nav>
 
         <main className="min-h-screen pb-4 lg:pb-0">{children}</main>
       </div>

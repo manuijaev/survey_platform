@@ -38,12 +38,17 @@ export default function AdminSurveysPage() {
   const saveSurvey = async (values: { name: string; description?: string }) => {
     if (editingSurvey) {
       await updateSurvey.mutateAsync({ id: editingSurvey.id, payload: values });
-    } else {
-      await createSurvey.mutateAsync(values);
+      setEditorOpen(false);
+      setEditingSurvey(null);
+      return;
     }
 
+    const created = await createSurvey.mutateAsync(values);
     setEditorOpen(false);
     setEditingSurvey(null);
+    if (created?.id) {
+      router.push(`/admin/surveys/${created.id}/questions`);
+    }
   };
 
   const confirmDelete = async () => {
