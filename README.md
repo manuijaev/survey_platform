@@ -2,20 +2,23 @@
 
 Monorepo implementation of the **Sky World Limited – Software Engineering Intern Pre-Interview Task**.
 
-| Spec repository | This project path | Notes |
+## Repositories
+
+| Spec repository | Location | Notes |
 |---|---|---|
 | `simple-survey-api` | [`backend/`](backend/) + [`database/`](database/) | Spring Boot XML API, Flyway migrations, Postman collection |
-| `simple-survey-web` | [`frontend/`](frontend/) | Next.js admin + public web app |
-| `simple-survey-mobile` | PWA in [`frontend/`](frontend/) | Installable mobile web app (see [Mobile](#mobile-application)) |
+| `simple-survey-web` | [`frontend/`](frontend/) | Next.js admin console and public survey web app |
+| `simple-survey-mobile` | https://github.com/manuijaev/simple-survey-mobile | Android TWA APK + build docs ([`mobile/`](mobile/) in this monorepo) |
 
-**GitHub (monorepo):** https://github.com/manuijaev/survey_platform
+**Monorepo:** https://github.com/manuijaev/survey_platform
 
-## Live deployments (optional credit)
+## Live deployments
 
 | Service | URL |
 |---|---|
 | Web (Vercel) | https://survey-platform-lemon-one.vercel.app |
-| API (Render) | Configure `API_URL` / `NEXT_PUBLIC_API_URL` on Vercel to your Render backend |
+| API (Render) | Set `API_URL` / `NEXT_PUBLIC_API_URL` on Vercel to your Render backend |
+| Android APK (v1.0.0) | https://github.com/manuijaev/simple-survey-mobile/releases/download/v1.0.0/app-release-signed.apk |
 
 ## Task compliance summary
 
@@ -23,8 +26,8 @@ Monorepo implementation of the **Sky World Limited – Software Engineering Inte
 
 | Requirement | Status | Location |
 |---|---|---|
-| RDBMS (PostgreSQL) | Done | `database/migration/` |
-| Database name `sky_survey_db` | Done | `backend` defaults + `database/sky_survey_db.sql` |
+| RDBMS (PostgreSQL) | Done | [`database/migration/`](database/migration/) |
+| Database name `sky_survey_db` | Done | `backend` defaults + [`database/sky_survey_db.sql`](database/sky_survey_db.sql) |
 | ERD | Done | [`database/ERD.png`](database/ERD.png), [`database/ERD.dbml`](database/ERD.dbml), [`database/ERD_DETAILED.md`](database/ERD_DETAILED.md) |
 | SQL script | Done | [`database/sky_survey_db.sql`](database/sky_survey_db.sql) |
 
@@ -45,7 +48,7 @@ Monorepo implementation of the **Sky World Limited – Software Engineering Inte
 | `GET /api/surveys/{surveyId}/responses` (paginated, email filter) | Done |
 | `GET /api/certificates/{id}` (download) | Done |
 | XML request/response format | Done |
-| Postman collection | Done [`backend/SurveyAPI.postman_collection.json`](backend/SurveyAPI.postman_collection.json) |
+| Postman collection | Done — [`backend/SurveyAPI.postman_collection.json`](backend/SurveyAPI.postman_collection.json) |
 
 **Question types:** `short_text`, `long_text`, `email`, `choice` (single + multiple via `multiple` attribute), `file`.
 
@@ -69,12 +72,20 @@ Monorepo implementation of the **Sky World Limited – Software Engineering Inte
 
 | Requirement | Status | Notes |
 |---|---|---|
-| Survey discovery on mobile | Done | Responsive web + PWA |
+| Survey discovery on mobile | Done | Responsive web, PWA, and Android APK |
 | Survey completion on mobile | Done | `/surveys/{id}/respond` |
-| Separate `simple-survey-mobile` repo | Partial | Delivered as **installable PWA** in the web repo |
-| APK publish | Partial | Install via **Add to Home Screen** (iOS/Android) or ship a TWA/APK wrapper separately |
+| Separate `simple-survey-mobile` repo | Done | https://github.com/manuijaev/simple-survey-mobile |
+| APK publish | Done | Signed TWA release [v1.0.0](https://github.com/manuijaev/simple-survey-mobile/releases/tag/v1.0.0) |
 
-See [`mobile/APK_BUILD_GUIDE.md`](mobile/APK_BUILD_GUIDE.md) to build a real Android APK, and [`frontend/README.md`](frontend/README.md#mobile-pwa) for PWA install.
+The Android app is a **Trusted Web Activity (TWA)** built with [Bubblewrap](https://github.com/GoogleChromeLabs/bubblewrap). It wraps the production PWA at https://survey-platform-lemon-one.vercel.app and opens fullscreen via [Digital Asset Links](https://survey-platform-lemon-one.vercel.app/.well-known/assetlinks.json).
+
+| Install option | How |
+|---|---|
+| Android APK | Download from [GitHub Releases](https://github.com/manuijaev/simple-survey-mobile/releases/download/v1.0.0/app-release-signed.apk) |
+| Android PWA | Open the live URL in Chrome → Install app / Add to Home screen |
+| iOS PWA | Open the live URL in Safari → Share → Add to Home Screen |
+
+Build instructions: [`mobile/BUBBLEWRAP_SETUP.md`](mobile/BUBBLEWRAP_SETUP.md), [`mobile/APK_BUILD_GUIDE.md`](mobile/APK_BUILD_GUIDE.md).
 
 ## Quick start
 
@@ -98,25 +109,28 @@ npm run dev
 - Public surveys: http://localhost:3000/surveys
 - Admin: http://localhost:3000/admin/login (default `admin` / `admin123`)
 
-## Submission checklist
+## Submission links
 
-Before submitting to Sky World Limited, provide:
+| Item | URL |
+|---|---|
+| API + database | https://github.com/manuijaev/survey_platform (`backend/`, `database/`) |
+| Web app | https://github.com/manuijaev/survey_platform (`frontend/`) |
+| Mobile repo | https://github.com/manuijaev/simple-survey-mobile |
+| Live web app | https://survey-platform-lemon-one.vercel.app |
+| Android APK | https://github.com/manuijaev/simple-survey-mobile/releases/download/v1.0.0/app-release-signed.apk |
 
-1. **API repo link** — point to `backend/` + `database/` (or split into `simple-survey-api`)
-2. **Web repo link** — point to `frontend/` (or `simple-survey-web`)
-3. **Mobile repo link** — document PWA approach or create `simple-survey-mobile` with APK
-4. **Deployment URLs** — Vercel + Render (optional credit)
-5. **APK** — if required strictly, build TWA/APK from the PWA or a thin React Native shell
+> The Android application is a Trusted Web Activity (TWA) packaging the production PWA. It provides the same mobile survey discovery, stepped completion, and multipart submission experience as the web app.
 
 ## Assumptions (beyond the brief)
 
 - Admin routes are protected with session auth (`/admin/*`).
 - Dynamic branching (skill-tree rules) extends the base spec for conditional questions.
-- Certificate storage uses PDF validation; Render free tier uses ephemeral disk unless persistent volume is attached.
+- Certificate storage uses PDF validation; Render free tier uses ephemeral disk unless a persistent volume is attached.
 - The web app proxies API calls in production via `/api/proxy` for same-origin PWA behaviour.
 
 ## Technologies
 
 - **Backend:** Java 17, Spring Boot 3, JPA, PostgreSQL, Flyway, Jackson XML
 - **Frontend:** Next.js 15, React 19, TypeScript, TanStack Query, Framer Motion, PWA
+- **Mobile:** Bubblewrap TWA, Android SDK, signed APK (`com.skyworld.survey`)
 - **Database:** PostgreSQL 14+
