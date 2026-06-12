@@ -392,21 +392,25 @@ html.pwa-splash-active #pwa-app-root,
   visibility: visible;
   pointer-events: auto;
   opacity: 0;
-  animation: pwaAppReveal 0.72s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  transform: translateY(14px);
+  animation: pwaAppReveal 1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 #pwa-app-root.pwa-app--ready {
   opacity: 1;
   visibility: visible;
+  transform: translateY(0);
 }
 
 @keyframes pwaAppReveal {
   from {
     opacity: 0;
+    transform: translateY(14px);
   }
 
   to {
     opacity: 1;
+    transform: translateY(0);
   }
 }
 

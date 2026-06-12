@@ -12,9 +12,9 @@ export const INSTALL_SESSION_SEEN_KEY = "skyworld-pwa-install-seen-session";
 export const BROWSER_CONTINUE_KEY = "skyworld-pwa-browser-continue";
 export const INSTALL_DISMISS_DAYS = 14;
 export const PWA_SPLASH_SEEN_KEY = "skyworld-pwa-splash-seen-session";
-/** How long the splash content holds before the exit fade begins. */
-export const PWA_SPLASH_HOLD_MS = 1200;
-/** Splash overlay opacity fade-out duration. */
-export const PWA_SPLASH_EXIT_MS = 560;
-/** Dashboard fade-in after splash has fully left. */
-export const PWA_APP_REVEAL_MS = 720;
+/** How long the splash logo animation holds before the crossfade begins. */
+export const PWA_SPLASH_HOLD_MS = 2500;
+/** Splash overlay opacity fade-out (runs in parallel with app reveal). */
+export const PWA_SPLASH_EXIT_MS = 900;
+/** Discovery section fade-in duration (overlaps splash exit). */
+export const PWA_APP_REVEAL_MS = 1000;

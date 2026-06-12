@@ -91,26 +91,30 @@ const titleChar = {
 };
 
 type PwaLaunchSplashProps = {
+  onBeginReveal: () => void;
   onComplete: () => void;
 };
 
-export function PwaLaunchSplash({ onComplete }: PwaLaunchSplashProps) {
+export function PwaLaunchSplash({ onBeginReveal, onComplete }: PwaLaunchSplashProps) {
   const reduceMotion = useReducedMotion();
   const [mounted] = useState(() => typeof document !== "undefined");
   const [visible, setVisible] = useState(true);
   const [exiting, setExiting] = useState(false);
+  const beginRevealRef = useRef(onBeginReveal);
   const completeRef = useRef(onComplete);
   const particles = useMemo(() => buildParticles(40), []);
   const sparks = useMemo(() => buildSparks(8), []);
   const titleChars = useMemo(() => PWA_SHORT_NAME.split(""), []);
 
   useEffect(() => {
+    beginRevealRef.current = onBeginReveal;
     completeRef.current = onComplete;
-  }, [onComplete]);
+  }, [onBeginReveal, onComplete]);
 
   useEffect(() => {
-    const holdMs = reduceMotion ? 400 : PWA_SPLASH_HOLD_MS;
+    const holdMs = reduceMotion ? 500 : PWA_SPLASH_HOLD_MS;
     const exitTimer = window.setTimeout(() => {
+      beginRevealRef.current();
       setExiting(true);
       setVisible(false);
     }, holdMs);

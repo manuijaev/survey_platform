@@ -64,13 +64,17 @@ export function PwaProvider({ children }: PwaProviderProps) {
     setShowLaunchSplash(false);
   }, []);
 
-  const completeLaunchSplash = useCallback(() => {
+  /** Crossfade: discovery fades in while the splash overlay fades out on top. */
+  const beginLaunchReveal = useCallback(() => {
     markPwaSplashSeenThisSession();
-    setShowLaunchSplash(false);
     document.documentElement.classList.remove("pwa-splash-active");
     document.documentElement.classList.add("pwa-app-reveal");
     document.body.style.overflow = "";
     setPhase("reveal");
+  }, []);
+
+  const finalizeLaunchReveal = useCallback(() => {
+    setShowLaunchSplash(false);
 
     window.setTimeout(() => {
       document.documentElement.classList.remove("pwa-app-reveal");
@@ -172,7 +176,9 @@ export function PwaProvider({ children }: PwaProviderProps) {
       >
         {children}
       </div>
-      {showLaunchSplash ? <PwaLaunchSplash onComplete={completeLaunchSplash} /> : null}
+      {showLaunchSplash ? (
+        <PwaLaunchSplash onBeginReveal={beginLaunchReveal} onComplete={finalizeLaunchReveal} />
+      ) : null}
       {chromeReady ? <OpenInAppPrompt /> : null}
       {chromeReady ? <InstallPrompt /> : null}
       {updateReady && chromeReady ? <UpdateBanner onReload={reloadForUpdate} /> : null}
