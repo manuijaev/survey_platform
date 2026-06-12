@@ -5,6 +5,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { useState } from "react";
 import dynamic from "next/dynamic";
 import type { ReactNode } from "react";
+import { BackendWarmup } from "@/components/BackendWarmup";
 import { PwaProvider } from "@/components/pwa/PwaProvider";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 
@@ -20,9 +21,10 @@ export function AppProviders({ children }: { children: ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 30_000,
+            staleTime: 60_000,
             refetchOnWindowFocus: false,
-            retry: 1
+            retry: 2,
+            retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 8000)
           },
           mutations: {
             retry: 0
@@ -34,6 +36,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <PwaProvider>
+        <BackendWarmup />
         <ToastProvider>{children}</ToastProvider>
       </PwaProvider>
       <DevTools initialIsOpen={false} />

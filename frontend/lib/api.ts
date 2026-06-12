@@ -35,7 +35,8 @@ const api: AxiosInstance = axios.create({
     "Content-Type": "application/xml"
   },
   responseType: "text",
-  transformResponse: [(data) => data]
+  transformResponse: [(data) => data],
+  timeout: 90_000
 });
 
 const parsePayload = <T>(value: unknown): T => {

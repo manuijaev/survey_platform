@@ -27,7 +27,10 @@ async function forward(request: NextRequest, pathSegments: string[]) {
     init.body = await request.arrayBuffer();
   }
 
-  const upstream = await fetch(target, init);
+  const upstream = await fetch(target, {
+    ...init,
+    signal: AbortSignal.timeout(90_000)
+  });
   const responseHeaders = new Headers();
   const upstreamType = upstream.headers.get("content-type");
   if (upstreamType) responseHeaders.set("Content-Type", upstreamType);
